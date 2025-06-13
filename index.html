@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cape Town Crime Hub</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0ea5e9;
+            --primary-dark: #0284c7;
+            --secondary: #f97316;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(6, 17, 97, 0.9), rgba(12, 20, 52, 0.8)),
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23000000" stop-opacity="0.1"/></radialGradient></defs><rect width="100%" height="100%" fill="url(%23a)"/></svg>');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            padding: 2rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.4);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(14, 165, 233, 0.6);
+        }
+
+        .main-content {
+            padding: 4rem 0;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section {
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, #fff, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        .chart-container {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            height: 500px;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(14, 165, 233, 0.1), transparent);
+            animation: rotate 20s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .chart-content {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .month-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            padding: 0.5rem;
+        }
+
+        .month-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .month-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .month-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .month-btn:disabled:hover {
+            background: none;
+            transform: none;
+        }
+
+        .current-month {
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            border-radius: 15px;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        #crimeChart {
+            flex: 1;
+            max-height: 400px;
+        }
+
+        .live-date {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .date-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 0.25rem;
+        }
+
+        .date-value {
+            font-size: 1rem;
+            color: var(--primary);
+        }
+
+        .areas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .area-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .area-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .area-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .risk-level {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .risk-high { background: rgba(239, 68, 68, 0.2); color: #fecaca; }
+        .risk-medium { background: rgba(245, 158, 11, 0.2); color: #fed7aa; }
+        .risk-low { background: rgba(16, 185, 129, 0.2); color: #a7f3d0; }
+
+        .news-section {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        .news-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .news-date {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-element {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 3rem; }
+            .hero p { font-size: 1.2rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .areas-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="live-date">
+        <div class="date-label">Cape Town Time</div>
+        <div class="date-value" id="live-date"></div>
+    </div>
+    
+    <div class="floating-elements" id="floating-elements"></div>
+    
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Cape Town Crime Hub</h1>
+            <p>Real-time insights, statistics, and safety information for the Mother City</p>
+            <button class="cta-button" onclick="scrollToContent()">
+                <span>Explore Data</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M7 13l3 3 7-7"/>
+                </svg>
+            </button>
+        </div>
+    </section>
+
+    <main class="main-content" id="main-content">
+        <div class="container">
+            <section class="section">
+                <h2 class="section-title">Current Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: var(--danger);">1,247</div>
+                        <div class="stat-label">Reported Incidents (This Month)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: var(--warning);">73%</div>
+                        <div class="stat-label">Response Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: var(--success);">-12%</div>
+                        <div class="stat-label">Change from Last Month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: var(--primary);">156</div>
+                        <div class="stat-label">Areas Monitored</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">Crime Distribution</h2>
+                <div class="chart-container">
+                    <div class="chart-content">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Crime Types Overview</h3>
+                            <div class="month-selector">
+                                <button class="month-btn" id="prev-month" onclick="changeMonth(-1)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M15 18l-6-6 6-6"/>
+                                    </svg>
+                                </button>
+                                <span class="current-month" id="current-month"></span>
+                                <button class="month-btn" id="next-month" onclick="changeMonth(1)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 18l6-6-6-6"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <canvas id="crimeChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">Area Risk Assessment</h2>
+                <div class="areas-grid">
+                    <div class="area-card">
+                        <div class="area-name">City Bowl</div>
+                        <span class="risk-level risk-medium">Medium Risk</span>
+                        <p>Tourist areas with moderate crime rates. Exercise normal precautions, especially at night.</p>
+                    </div>
+                    <div class="area-card">
+                        <div class="area-name">Camps Bay</div>
+                        <span class="risk-level risk-low">Low Risk</span>
+                        <p>Well-patrolled beachfront area with good security presence. Generally safe for visitors.</p>
+                    </div>
+                    <div class="area-card">
+                        <div class="area-name">Khayelitsha</div>
+                        <span class="risk-level risk-high">High Risk</span>
+                        <p>Township area with elevated crime rates. Avoid after dark and travel with local guides.</p>
+                    </div>
+                    <div class="area-card">
+                        <div class="area-name">Hout Bay</div>
+                        <span class="risk-level risk-medium">Medium Risk</span>
+                        <p>Scenic coastal suburb with occasional property crimes. Stay aware of surroundings.</p>
+                    </div>
+                    <div class="area-card">
+                        <div class="area-name">Nyanga</div>
+                        <span class="risk-level risk-high">High Risk</span>
+                        <p>High crime township. Travel not recommended without local knowledge and security.</p>
+                    </div>
+                    <div class="area-card">
+                        <div class="area-name">Sea Point</div>
+                        <span class="risk-level risk-low">Low Risk</span>
+                        <p>Upmarket suburb with good security. Popular with tourists and generally safe.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">Recent Safety News</h2>
+                <div class="news-section">
+                    <div class="news-item">
+                        <div class="news-title">New CCTV Network Deployed in CBD</div>
+                        <div class="news-date">June 10, 2025</div>
+                        <p>Cape Town's Central Business District receives upgraded surveillance system with AI-powered threat detection.</p>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-title">Community Policing Forum Expansion</div>
+                        <div class="news-date">June 8, 2025</div>
+                        <p>Local communities in 15 neighborhoods join expanded community policing initiatives.</p>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-title">Tourist Safety App Launched</div>
+                        <div class="news-date">June 5, 2025</div>
+                        <p>New mobile application provides real-time safety alerts and emergency contact features for visitors.</p>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-title">Property Crime Decreases in Southern Suburbs</div>
+                        <div class="news-date">June 3, 2025</div>
+                        <p>Statistics show 18% reduction in residential break-ins across Constantia, Claremont, and surrounding areas.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Cape Town Crime Hub. Data sourced from SAPS and community reports.</p>
+    </footer>
+
+    <script>
+        // Smooth scrolling
+        function scrollToContent() {
+            document.getElementById('main-content').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        // Create floating elements
+        function createFloatingElements() {
+            const container = document.getElementById('floating-elements');
+            for (let i = 0; i < 20; i++) {
+                const element = document.createElement('div');
+                element.className = 'floating-element';
+                element.style.left = Math.random() * 100 + '%';
+                element.style.animationDelay = Math.random() * 20 + 's';
+                element.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                container.appendChild(element);
+            }
+        }
+
+        // Chart and month data
+        let currentChart = null;
+        let currentMonthIndex = 0; // 0 = current month, -1 = last month, etc.
+        
+        // Sample historical data for different months
+        const monthlyData = {
+            0: { // Current month (June 2025)
+                month: 'June 2025',
+                data: [35, 25, 15, 12, 8, 5],
+                total: 1247
+            },
+            '-1': { // May 2025
+                month: 'May 2025',
+                data: [32, 28, 18, 15, 6, 3],
+                total: 1342
+            },
+            '-2': { // April 2025
+                month: 'April 2025',
+                data: [38, 22, 16, 14, 7, 4],
+                total: 1198
+            },
+            '-3': { // March 2025
+                month: 'March 2025',
+                data: [41, 26, 12, 11, 9, 6],
+                total: 1456
+            },
+            '-4': { // February 2025
+                month: 'February 2025',
+                data: [29, 31, 20, 13, 5, 2],
+                total: 1089
+            },
+            '-5': { // January 2025
+                month: 'January 2025',
+                data: [44, 24, 17, 9, 8, 3],
+                total: 1523
+            }
+        };
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('crimeChart').getContext('2d');
+            updateChart();
+        }
+
+        // Update chart with current month data
+        function updateChart() {
+            const ctx = document.getElementById('crimeChart').getContext('2d');
+            const monthData = monthlyData[currentMonthIndex.toString()];
+            
+            if (currentChart) {
+                currentChart.destroy();
+            }
+            
+            currentChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Theft', 'Burglary', 'Assault', 'Vehicle Crime', 'Drug Related', 'Other'],
+                    datasets: [{
+                        data: monthData.data,
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f97316',
+                            '#f59e0b',
+                            '#eab308',
+                            '#84cc16',
+                            '#10b981'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff',
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 800,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+            
+            // Update month display
+            document.getElementById('current-month').textContent = monthData.month;
+            
+            // Update navigation buttons
+            const prevBtn = document.getElementById('prev-month');
+            const nextBtn = document.getElementById('next-month');
+            
+            // Disable previous button if we're at the oldest month
+            prevBtn.disabled = currentMonthIndex <= -5;
+            
+            // Disable next button if we're at the current month
+            nextBtn.disabled = currentMonthIndex >= 0;
+            
+            // Update the main statistics to reflect selected month
+            updateMainStats(monthData.total);
+        }
+
+        // Change month function
+        function changeMonth(direction) {
+            const newIndex = currentMonthIndex + direction;
+            
+            // Check bounds
+            if (newIndex < -5 || newIndex > 0) return;
+            
+            currentMonthIndex = newIndex;
+            updateChart();
+        }
+
+        // Update main statistics based on selected month
+        function updateMainStats(totalIncidents) {
+            const statCards = document.querySelectorAll('.stat-value');
+            if (statCards.length > 0) {
+                // Update the first stat card (reported incidents)
+                statCards[0].textContent = totalIncidents.toLocaleString();
+                
+                // Update the trend indicator based on comparison with previous month
+                if (currentMonthIndex < 0) {
+                    const currentData = monthlyData[currentMonthIndex.toString()];
+                    const previousData = monthlyData[(currentMonthIndex - 1).toString()];
+                    
+                    if (previousData) {
+                        const change = ((currentData.total - previousData.total) / previousData.total * 100).toFixed(0);
+                        const changeElement = statCards[2];
+                        changeElement.textContent = `${change > 0 ? '+' : ''}${change}%`;
+                        changeElement.style.color = change > 0 ? 'var(--danger)' : 'var(--success)';
+                    }
+                }
+            }
+        }
+
+        // Update live date
+        function updateLiveDate() {
+            const now = new Date();
+            const options = {
+                timeZone: 'Africa/Johannesburg',
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            
+            const dateString = now.toLocaleDateString('en-ZA', options);
+            document.getElementById('live-date').textContent = dateString;
+        }
+
+        // Update date every minute
+        function startDateUpdater() {
+            updateLiveDate();
+            setInterval(updateLiveDate, 60000); // Update every minute
+        }
+
+        // Animate stats on scroll
+        function animateStats() {
+            const cards = document.querySelectorAll('.stat-card');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const value = entry.target.querySelector('.stat-value');
+                        const finalValue = value.textContent;
+                        const isPercentage = finalValue.includes('%');
+                        const isNegative = finalValue.includes('-');
+                        const numericValue = parseInt(finalValue.replace(/[^\d]/g, ''));
+                        
+                        let current = 0;
+                        const increment = numericValue / 50;
+                        const timer = setInterval(() => {
+                            current += increment;
+                            if (current >= numericValue) {
+                                current = numericValue;
+                                clearInterval(timer);
+                            }
+                            
+                            let displayValue = Math.floor(current).toLocaleString();
+                            if (isPercentage) displayValue += '%';
+                            if (isNegative) displayValue = '-' + displayValue;
+                            
+                            value.textContent = displayValue;
+                        }, 20);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            cards.forEach(card => observer.observe(card));
+        }
+
+        // Add parallax effect to hero
+        function addParallaxEffect() {
+            const hero = document.querySelector('.hero');
+            window.addEventListener('scroll', () => {
+                const scrolled = window.pageYOffset;
+                const rate = scrolled * -0.5;
+                hero.style.transform = `translateY(${rate}px)`;
+            });
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            createFloatingElements();
+            initChart();
+            animateStats();
+            addParallaxEffect();
+            startDateUpdater();
+        });
+
+        // Add click effects to cards
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.stat-card, .area-card')) {
+                const card = e.target.closest('.stat-card, .area-card');
+                card.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    card.style.transform = '';
+                }, 150);
+            }
+        });
+    </script>
+</body>
+</html>
