@@ -597,8 +597,39 @@
             }
         }
 
-        // --- Load local JSON data ---
-        let crimeStats = [];
+        // --- CSV Data Loaders ---
+        function parseCSV(csv) {
+            const lines = csv.trim().split('\n');
+            const headers = lines[0].replace(/"/g, '').split(',');
+            return lines.slice(1).map(line => {
+                const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(s => s.replace(/(^"|"$)/g, ''));
+                const obj = {};
+                headers.forEach((h, i) => obj[h] = cols[i]);
+                return obj;
+            });
+        }
+
+        async function loadCrimeTypeStats() {
+            const resp = await fetch('crimecounts-by-type.csv');
+            const csv = await resp.text();
+            return parseCSV(csv);
+        }
+
+        async function loadCrimeStationStats() {
+            const resp = await fetch('crimecounts-by-station.csv');
+            const csv = await resp.text();
+            return parseCSV(csv);
+        }
+
+        async function loadStationCoords() {
+            const resp = await fetch('stations_coordinates.csv');
+            const csv = await resp.text();
+            return parseCSV(csv);
+        }
+
+        // --- Data Aggregation ---
+        let crimeTypeStats = [];
+        let crimeStationStats = [];
         let quarters = [
             { label: "Jan–Mar 2025", key: "January 2025 to March 2025" },
             { label: "Jan–Mar 2024", key: "January 2024 to March 2024" },
@@ -609,22 +640,21 @@
         let currentQuarterIndex = 0;
         let currentChart = null;
 
-        async function loadCrimeStats() {
-            const response = await fetch('cape_town_crime_stats.json');
-            crimeStats = await response.json();
+        async function loadAllStats() {
+            [crimeTypeStats, crimeStationStats] = await Promise.all([
+                loadCrimeTypeStats(),
+                loadCrimeStationStats()
+            ]);
         }
 
         function getQuarterData(quarterKey) {
-            // Aggregate by crime category
-            const categories = {};
+            // Sum all crime types for the selected quarter
             let total = 0;
-            crimeStats.forEach(row => {
-                const cat = row["CRIME CATEGORY"];
-                const count = row[quarterKey] || 0;
-                categories[cat] = (categories[cat] || 0) + count;
-                total += count;
+            crimeTypeStats.forEach(row => {
+                const val = Number(row[quarterKey]) || 0;
+                total += val;
             });
-            return { categories, total };
+            return { total };
         }
 
         function getChartData(quarterKey) {
@@ -632,12 +662,12 @@
             const cats = [
                 "Murder",
                 "Sexual offences",
-                "17 Community reported serious Crime",
+                "17 Community reported serious crime",
                 "Crime detected as a result of police action"
             ];
             const data = cats.map(cat =>
-                crimeStats.filter(r => r["CRIME CATEGORY"] === cat)
-                    .reduce((sum, r) => sum + (r[quarterKey] || 0), 0)
+                crimeTypeStats.filter(r => r["CRIME CATEGORY"] === cat)
+                    .reduce((sum, r) => sum + (Number(r[quarterKey]) || 0), 0)
             );
             return {
                 labels: cats,
@@ -645,51 +675,27 @@
             };
         }
 
-        // Initialize the Leaflet map
-        let crimeMap = null;
-        let crimeMapMarkers = [];
-
-        async function initCrimeMap() {
-            if (!crimeMap) {
-                crimeMap = L.map('crime-map').setView([-33.9249, 18.4241], 11); // Cape Town center
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(crimeMap);
-            }
-
-            // Remove old markers
-            crimeMapMarkers.forEach(marker => crimeMap.removeLayer(marker));
-            crimeMapMarkers = [];
-
-            // Load data
-            const [stationCoords, crimeStats] = await Promise.all([
-                loadStationCoords(),
-                fetch('cape_town_crime_stats.json').then(r => r.json())
-            ]);
-            // Use current quarter for risk
-            const quarterKey = quarters[currentQuarterIndex].key;
-            const risks = getStationRisks(crimeStats, quarterKey);
-
-            // Add markers for each station
-            stationCoords.forEach(station => {
-                const name = station.Station;
-                const lat = parseFloat(station.Latitude);
-                const lng = parseFloat(station.Longitude);
-                const risk = risks[name] || 'Low';
-                let color = risk === "High" ? "#ef4444" : risk === "Medium" ? "#f59e0b" : "#10b981";
-                const marker = L.circleMarker([lat, lng], {
-                    radius: 12,
-                    color: color,
-                    fillColor: color,
-                    fillOpacity: 0.7,
-                    weight: 2
-                })
-                .addTo(crimeMap)
-                .bindPopup(`<b>${name}</b><br>Risk: <span style="color:${color}">${risk}</span>`);
-                crimeMapMarkers.push(marker);
+        // --- Map Risk Calculation ---
+        function getStationRisks(crimeStationStats, quarterKey) {
+            // Aggregate total crimes per station for the selected quarter
+            const stationTotals = {};
+            crimeStationStats.forEach(row => {
+                const station = row.Station;
+                const count = Number(row[quarterKey]) || 0;
+                stationTotals[station] = (stationTotals[station] || 0) + count;
             });
+            // Sort stations by total crimes
+            const sorted = Object.entries(stationTotals).sort((a, b) => b[1] - a[1]);
+            const risks = {};
+            sorted.forEach(([station], i) => {
+                if (i < 5) risks[station] = 'High';
+                else if (i < 10) risks[station] = 'Medium';
+                else risks[station] = 'Low';
+            });
+            return risks;
         }
 
+        // --- Chart and Stats Update ---
         async function updateChartAndStats() {
             const quarter = quarters[currentQuarterIndex];
             const chartData = getChartData(quarter.key);
@@ -753,151 +759,16 @@
                     statCards[2].textContent = 'N/A';
                     statCards[2].style.color = 'var(--gray)';
                 }
+                // Areas monitored
+                statCards[3].textContent = [...new Set(crimeStationStats.map(r => r.Station))].length;
             }
-
-            await initCrimeMap(); // Update map markers for the selected quarter
         }
 
-        async function changeMonth(direction) {
-            const newIndex = currentQuarterIndex - direction; // reverse for prev/next
-            if (newIndex < 0 || newIndex >= quarters.length) return;
-            currentQuarterIndex = newIndex;
-            await updateChartAndStats();
-        }
+        // --- Map Update ---
+        let crimeMap = null;
+        let crimeMapMarkers = [];
 
-        // Update live date
-        function updateLiveDate() {
-            const now = new Date();
-            const options = {
-                timeZone: 'Africa/Johannesburg',
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            };
-            
-            const dateString = now.toLocaleDateString('en-ZA', options);
-            document.getElementById('live-date').textContent = dateString;
-        }
-
-        // Update date every minute
-        function startDateUpdater() {
-            updateLiveDate();
-            setInterval(updateLiveDate, 60000); // Update every minute
-        }
-
-        // Animate stats on scroll
-        function animateStats() {
-            const cards = document.querySelectorAll('.stat-card');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const value = entry.target.querySelector('.stat-value');
-                        const finalValue = value.textContent;
-                        const isPercentage = finalValue.includes('%');
-                        const isNegative = finalValue.includes('-');
-                        const numericValue = parseInt(finalValue.replace(/[^\d]/g, ''));
-                        
-                        let current = 0;
-                        const increment = numericValue / 50;
-                        const timer = setInterval(() => {
-                            current += increment;
-                            if (current >= numericValue) {
-                                current = numericValue;
-                                clearInterval(timer);
-                            }
-                            
-                            let displayValue = Math.floor(current).toLocaleString();
-                            if (isPercentage) displayValue += '%';
-                            if (isNegative) displayValue = '-' + displayValue;
-                            
-                            value.textContent = displayValue;
-                        }, 20);
-                    }
-                });
-            }, { threshold: 0.5 });
-
-            cards.forEach(card => observer.observe(card));
-        }
-
-        // Add parallax effect to hero
-        function addParallaxEffect() {
-            const hero = document.querySelector('.hero');
-            window.addEventListener('scroll', () => {
-                const scrolled = window.pageYOffset;
-                const rate = scrolled * -0.5;
-                hero.style.transform = `translateY(${rate}px)`;
-            });
-        }
-
-        // Initialize everything
-        document.addEventListener('DOMContentLoaded', async () => {
-            createFloatingElements();
-            await loadCrimeStats();
-            await updateChartAndStats();
-            animateStats();
-            addParallaxEffect();
-            startDateUpdater();
-            await initCrimeMap(); // Await to ensure map loads after data
-        });
-
-        // Add click effects to cards
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.stat-card, .area-card')) {
-                const card = e.target.closest('.stat-card, .area-card');
-                card.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    card.style.transform = '';
-                }, 150);
-            }
-        });
-    </script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // Helper: Parse CSV to array of objects
-        function parseCSV(csv) {
-            const lines = csv.trim().split('\n');
-            const headers = lines[0].replace(/"/g, '').split(',');
-            return lines.slice(1).map(line => {
-                const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(s => s.replace(/(^"|"$)/g, ''));
-                const obj = {};
-                headers.forEach((h, i) => obj[h] = cols[i]);
-                return obj;
-            });
-        }
-
-        // Load station coordinates from CSV
-        async function loadStationCoords() {
-            const resp = await fetch('stations_coordinates.csv');
-            const csv = await resp.text();
-            return parseCSV(csv);
-        }
-
-        // Get risk level for a station based on crime stats (top 5 = high, next 5 = medium, rest = low)
-        function getStationRisks(crimeStats, quarterKey) {
-            // Aggregate total crimes per station for the selected quarter
-            const stationTotals = {};
-            crimeStats.forEach(row => {
-                const station = row.Station;
-                const count = Number(row[quarterKey]) || 0;
-                stationTotals[station] = (stationTotals[station] || 0) + count;
-            });
-            // Sort stations by total crimes
-            const sorted = Object.entries(stationTotals).sort((a, b) => b[1] - a[1]);
-            const risks = {};
-            sorted.forEach(([station], i) => {
-                if (i < 5) risks[station] = 'High';
-                else if (i < 10) risks[station] = 'Medium';
-                else risks[station] = 'Low';
-            });
-            return risks;
-        }
-
-        // Initialize Leaflet map with real station data
         async function initCrimeMap() {
-            // Ensure map is initialized only once
             if (!crimeMap) {
                 crimeMap = L.map('crime-map').setView([-33.9249, 18.4241], 11); // Cape Town center
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -910,13 +781,12 @@
             crimeMapMarkers = [];
 
             // Load data
-            const [stationCoords, crimeStats] = await Promise.all([
-                loadStationCoords(),
-                fetch('cape_town_crime_stats.json').then(r => r.json())
+            const [stationCoords] = await Promise.all([
+                loadStationCoords()
             ]);
             // Use current quarter for risk
             const quarterKey = quarters[currentQuarterIndex].key;
-            const risks = getStationRisks(crimeStats, quarterKey);
+            const risks = getStationRisks(crimeStationStats, quarterKey);
 
             // Add markers for each station
             stationCoords.forEach(station => {
@@ -938,9 +808,26 @@
             });
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initCrimeMap();
+        // --- Month Change Handler ---
+        async function changeMonth(direction) {
+            const newIndex = currentQuarterIndex - direction; // reverse for prev/next
+            if (newIndex < 0 || newIndex >= quarters.length) return;
+            currentQuarterIndex = newIndex;
+            await updateChartAndStats();
+            await initCrimeMap();
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            createFloatingElements();
+            await loadAllStats();
+            await updateChartAndStats();
+            animateStats();
+            addParallaxEffect();
+            startDateUpdater();
+            await initCrimeMap();
         });
     </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
