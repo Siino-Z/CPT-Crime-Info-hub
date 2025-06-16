@@ -597,7 +597,7 @@
             }
         }
 
-        // --- CSV Data Loaders ---
+        // --- CSV Data Loader ---
         function parseCSV(csv) {
             const lines = csv.trim().split('\n');
             const headers = lines[0].replace(/"/g, '').split(',');
@@ -609,27 +609,14 @@
             });
         }
 
-        async function loadCrimeTypeStats() {
-            const resp = await fetch('crimecounts-by-type.csv');
-            const csv = await resp.text();
-            return parseCSV(csv);
-        }
-
-        async function loadCrimeStationStats() {
-            const resp = await fetch('crimecounts-by-station.csv');
-            const csv = await resp.text();
-            return parseCSV(csv);
-        }
-
-        async function loadStationCoords() {
-            const resp = await fetch('stations_coordinates.csv');
+        async function loadAggregateData() {
+            const resp = await fetch('crimecounts-aggregate-with-coords.csv');
             const csv = await resp.text();
             return parseCSV(csv);
         }
 
         // --- Data Aggregation ---
-        let crimeTypeStats = [];
-        let crimeStationStats = [];
+        let aggregateData = [];
         let quarters = [
             { label: "Jan–Mar 2025", key: "January 2025 to March 2025" },
             { label: "Jan–Mar 2024", key: "January 2024 to March 2024" },
@@ -641,18 +628,17 @@
         let currentChart = null;
 
         async function loadAllStats() {
-            [crimeTypeStats, crimeStationStats] = await Promise.all([
-                loadCrimeTypeStats(),
-                loadCrimeStationStats()
-            ]);
+            aggregateData = await loadAggregateData();
         }
 
         function getQuarterData(quarterKey) {
-            // Sum all crime types for the selected quarter
+            // Sum all By Type rows for the selected quarter
             let total = 0;
-            crimeTypeStats.forEach(row => {
-                const val = Number(row[quarterKey]) || 0;
-                total += val;
+            aggregateData.forEach(row => {
+                if (row['Data Type'] === 'By Type') {
+                    const val = Number(row[quarterKey]) || 0;
+                    total += val;
+                }
             });
             return { total };
         }
@@ -666,7 +652,7 @@
                 "Crime detected as a result of police action"
             ];
             const data = cats.map(cat =>
-                crimeTypeStats.filter(r => r["CRIME CATEGORY"] === cat)
+                aggregateData.filter(r => r['Data Type'] === 'By Type' && r["Name"] === cat)
                     .reduce((sum, r) => sum + (Number(r[quarterKey]) || 0), 0)
             );
             return {
@@ -676,13 +662,15 @@
         }
 
         // --- Map Risk Calculation ---
-        function getStationRisks(crimeStationStats, quarterKey) {
+        function getStationRisks(quarterKey) {
             // Aggregate total crimes per station for the selected quarter
             const stationTotals = {};
-            crimeStationStats.forEach(row => {
-                const station = row.Station;
-                const count = Number(row[quarterKey]) || 0;
-                stationTotals[station] = (stationTotals[station] || 0) + count;
+            aggregateData.forEach(row => {
+                if (row['Data Type'] === 'By Station') {
+                    const station = row.Name;
+                    const count = Number(row[quarterKey]) || 0;
+                    stationTotals[station] = (stationTotals[station] || 0) + count;
+                }
             });
             // Sort stations by total crimes
             const sorted = Object.entries(stationTotals).sort((a, b) => b[1] - a[1]);
@@ -760,7 +748,7 @@
                     statCards[2].style.color = 'var(--gray)';
                 }
                 // Areas monitored
-                statCards[3].textContent = [...new Set(crimeStationStats.map(r => r.Station))].length;
+                statCards[3].textContent = [...new Set(aggregateData.filter(r => r['Data Type'] === 'By Station').map(r => r.Name))].length;
             }
         }
 
@@ -780,31 +768,29 @@
             crimeMapMarkers.forEach(marker => crimeMap.removeLayer(marker));
             crimeMapMarkers = [];
 
-            // Load data
-            const [stationCoords] = await Promise.all([
-                loadStationCoords()
-            ]);
             // Use current quarter for risk
             const quarterKey = quarters[currentQuarterIndex].key;
-            const risks = getStationRisks(crimeStationStats, quarterKey);
+            const risks = getStationRisks(quarterKey);
 
-            // Add markers for each station
-            stationCoords.forEach(station => {
-                const name = station.Station;
-                const lat = parseFloat(station.Latitude);
-                const lng = parseFloat(station.Longitude);
-                const risk = risks[name] || 'Low';
-                let color = risk === "High" ? "#ef4444" : risk === "Medium" ? "#f59e0b" : "#10b981";
-                const marker = L.circleMarker([lat, lng], {
-                    radius: 12,
-                    color: color,
-                    fillColor: color,
-                    fillOpacity: 0.7,
-                    weight: 2
-                })
-                .addTo(crimeMap)
-                .bindPopup(`<b>${name}</b><br>Risk: <span style="color:${color}">${risk}</span>`);
-                crimeMapMarkers.push(marker);
+            // Add markers for each station with coordinates
+            aggregateData.forEach(row => {
+                if (row['Data Type'] === 'By Station' && row.Latitude && row.Longitude) {
+                    const name = row.Name;
+                    const lat = parseFloat(row.Latitude);
+                    const lng = parseFloat(row.Longitude);
+                    const risk = risks[name] || 'Low';
+                    let color = risk === "High" ? "#ef4444" : risk === "Medium" ? "#f59e0b" : "#10b981";
+                    const marker = L.circleMarker([lat, lng], {
+                        radius: 12,
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.7,
+                        weight: 2
+                    })
+                    .addTo(crimeMap)
+                    .bindPopup(`<b>${name}</b><br>Risk: <span style="color:${color}">${risk}</span>`);
+                    crimeMapMarkers.push(marker);
+                }
             });
         }
 
@@ -822,9 +808,9 @@
             createFloatingElements();
             await loadAllStats();
             await updateChartAndStats();
-            animateStats();
-            addParallaxEffect();
-            startDateUpdater();
+            animateStats && animateStats();
+            addParallaxEffect && addParallaxEffect();
+            startDateUpdater && startDateUpdater();
             await initCrimeMap();
         });
     </script>
