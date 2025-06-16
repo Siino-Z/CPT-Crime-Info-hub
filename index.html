@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cape Town Crime Hub</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * {
             margin: 0;
@@ -560,6 +561,11 @@
                     </div>
                 </div>
             </section>
+
+            <section class="section">
+                <h2 class="section-title">Crime Hotspots Map</h2>
+                <div id="crime-map" style="height: 500px; border-radius: 20px; overflow: hidden; margin-bottom: 2rem;"></div>
+            </section>
         </div>
     </main>
 
@@ -853,6 +859,44 @@
                     card.style.transform = '';
                 }, 150);
             }
+        });
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize Leaflet map
+        function initCrimeMap() {
+            const map = L.map('crime-map').setView([-33.9249, 18.4241], 11); // Cape Town center
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Example hotspots (replace or extend with real data)
+            const hotspots = [
+                { name: "City Bowl", coords: [-33.928992, 18.417396], risk: "Medium" },
+                { name: "Khayelitsha", coords: [-34.0381, 18.6761], risk: "High" },
+                { name: "Nyanga", coords: [-34.0007, 18.5731], risk: "High" },
+                { name: "Camps Bay", coords: [-33.9500, 18.3833], risk: "Low" },
+                { name: "Hout Bay", coords: [-34.0500, 18.3500], risk: "Medium" },
+                { name: "Sea Point", coords: [-33.9122, 18.3871], risk: "Low" }
+            ];
+
+            hotspots.forEach(h => {
+                let color = h.risk === "High" ? "#ef4444" : h.risk === "Medium" ? "#f59e0b" : "#10b981";
+                L.circleMarker(h.coords, {
+                    radius: 14,
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.6,
+                    weight: 2
+                })
+                .addTo(map)
+                .bindPopup(`<b>${h.name}</b><br>Risk: <span style="color:${color}">${h.risk}</span>`);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCrimeMap();
         });
     </script>
 </body>
