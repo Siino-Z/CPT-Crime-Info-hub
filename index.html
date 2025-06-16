@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cape Town Crime Hub</title>
+    <meta name="author" content="Sinothabo Zwane">
+    <meta name="description" content="A project by Sinothabo Zwane to expand web development skills. Cape Town Crime Info Hub visualizes SAPS crime data with interactive charts and maps.">
+    <meta name="generator" content="Developed by Sinothabo Zwane">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -642,6 +645,51 @@
             };
         }
 
+        // Initialize the Leaflet map
+        let crimeMap = null;
+        let crimeMapMarkers = [];
+
+        async function initCrimeMap() {
+            if (!crimeMap) {
+                crimeMap = L.map('crime-map').setView([-33.9249, 18.4241], 11); // Cape Town center
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(crimeMap);
+            }
+
+            // Remove old markers
+            crimeMapMarkers.forEach(marker => crimeMap.removeLayer(marker));
+            crimeMapMarkers = [];
+
+            // Load data
+            const [stationCoords, crimeStats] = await Promise.all([
+                loadStationCoords(),
+                fetch('cape_town_crime_stats.json').then(r => r.json())
+            ]);
+            // Use current quarter for risk
+            const quarterKey = quarters[currentQuarterIndex].key;
+            const risks = getStationRisks(crimeStats, quarterKey);
+
+            // Add markers for each station
+            stationCoords.forEach(station => {
+                const name = station.Station;
+                const lat = parseFloat(station.Latitude);
+                const lng = parseFloat(station.Longitude);
+                const risk = risks[name] || 'Low';
+                let color = risk === "High" ? "#ef4444" : risk === "Medium" ? "#f59e0b" : "#10b981";
+                const marker = L.circleMarker([lat, lng], {
+                    radius: 12,
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.7,
+                    weight: 2
+                })
+                .addTo(crimeMap)
+                .bindPopup(`<b>${name}</b><br>Risk: <span style="color:${color}">${risk}</span>`);
+                crimeMapMarkers.push(marker);
+            });
+        }
+
         async function updateChartAndStats() {
             const quarter = quarters[currentQuarterIndex];
             const chartData = getChartData(quarter.key);
@@ -695,7 +743,6 @@
             const statCards = document.querySelectorAll('.stat-value');
             if (statCards.length > 0) {
                 statCards[0].textContent = total.toLocaleString();
-                // Response rate and areas monitored: keep as static or calculate if you have data
                 // Change from last quarter
                 if (currentQuarterIndex < quarters.length - 1) {
                     const prev = getQuarterData(quarters[currentQuarterIndex + 1].key).total;
@@ -707,6 +754,8 @@
                     statCards[2].style.color = 'var(--gray)';
                 }
             }
+
+            await initCrimeMap(); // Update map markers for the selected quarter
         }
 
         async function changeMonth(direction) {
@@ -791,7 +840,7 @@
             animateStats();
             addParallaxEffect();
             startDateUpdater();
-            initCrimeMap();
+            await initCrimeMap(); // Await to ensure map loads after data
         });
 
         // Add click effects to cards
@@ -807,35 +856,85 @@
     </script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize Leaflet map
-        function initCrimeMap() {
-            const map = L.map('crime-map').setView([-33.9249, 18.4241], 11); // Cape Town center
+        // Helper: Parse CSV to array of objects
+        function parseCSV(csv) {
+            const lines = csv.trim().split('\n');
+            const headers = lines[0].replace(/"/g, '').split(',');
+            return lines.slice(1).map(line => {
+                const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(s => s.replace(/(^"|"$)/g, ''));
+                const obj = {};
+                headers.forEach((h, i) => obj[h] = cols[i]);
+                return obj;
+            });
+        }
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
+        // Load station coordinates from CSV
+        async function loadStationCoords() {
+            const resp = await fetch('stations_coordinates.csv');
+            const csv = await resp.text();
+            return parseCSV(csv);
+        }
 
-            // Example hotspots (replace or extend with real data)
-            const hotspots = [
-                { name: "City Bowl", coords: [-33.928992, 18.417396], risk: "Medium" },
-                { name: "Khayelitsha", coords: [-34.0381, 18.6761], risk: "High" },
-                { name: "Nyanga", coords: [-34.0007, 18.5731], risk: "High" },
-                { name: "Camps Bay", coords: [-33.9500, 18.3833], risk: "Low" },
-                { name: "Hout Bay", coords: [-34.0500, 18.3500], risk: "Medium" },
-                { name: "Sea Point", coords: [-33.9122, 18.3871], risk: "Low" }
-            ];
+        // Get risk level for a station based on crime stats (top 5 = high, next 5 = medium, rest = low)
+        function getStationRisks(crimeStats, quarterKey) {
+            // Aggregate total crimes per station for the selected quarter
+            const stationTotals = {};
+            crimeStats.forEach(row => {
+                const station = row.Station;
+                const count = Number(row[quarterKey]) || 0;
+                stationTotals[station] = (stationTotals[station] || 0) + count;
+            });
+            // Sort stations by total crimes
+            const sorted = Object.entries(stationTotals).sort((a, b) => b[1] - a[1]);
+            const risks = {};
+            sorted.forEach(([station], i) => {
+                if (i < 5) risks[station] = 'High';
+                else if (i < 10) risks[station] = 'Medium';
+                else risks[station] = 'Low';
+            });
+            return risks;
+        }
 
-            hotspots.forEach(h => {
-                let color = h.risk === "High" ? "#ef4444" : h.risk === "Medium" ? "#f59e0b" : "#10b981";
-                L.circleMarker(h.coords, {
-                    radius: 14,
+        // Initialize Leaflet map with real station data
+        async function initCrimeMap() {
+            // Ensure map is initialized only once
+            if (!crimeMap) {
+                crimeMap = L.map('crime-map').setView([-33.9249, 18.4241], 11); // Cape Town center
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(crimeMap);
+            }
+
+            // Remove old markers
+            crimeMapMarkers.forEach(marker => crimeMap.removeLayer(marker));
+            crimeMapMarkers = [];
+
+            // Load data
+            const [stationCoords, crimeStats] = await Promise.all([
+                loadStationCoords(),
+                fetch('cape_town_crime_stats.json').then(r => r.json())
+            ]);
+            // Use current quarter for risk
+            const quarterKey = quarters[currentQuarterIndex].key;
+            const risks = getStationRisks(crimeStats, quarterKey);
+
+            // Add markers for each station
+            stationCoords.forEach(station => {
+                const name = station.Station;
+                const lat = parseFloat(station.Latitude);
+                const lng = parseFloat(station.Longitude);
+                const risk = risks[name] || 'Low';
+                let color = risk === "High" ? "#ef4444" : risk === "Medium" ? "#f59e0b" : "#10b981";
+                const marker = L.circleMarker([lat, lng], {
+                    radius: 12,
                     color: color,
                     fillColor: color,
-                    fillOpacity: 0.6,
+                    fillOpacity: 0.7,
                     weight: 2
                 })
-                .addTo(map)
-                .bindPopup(`<b>${h.name}</b><br>Risk: <span style="color:${color}">${h.risk}</span>`);
+                .addTo(crimeMap)
+                .bindPopup(`<b>${name}</b><br>Risk: <span style="color:${color}">${risk}</span>`);
+                crimeMapMarkers.push(marker);
             });
         }
 
