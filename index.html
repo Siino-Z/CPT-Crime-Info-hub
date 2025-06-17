@@ -890,12 +890,14 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script>
+        let crimeData = []; // Make it global
+
         document.addEventListener('DOMContentLoaded', function () {
             Papa.parse('crime-data.csv', {
                 download: true,
                 header: true,
                 complete: function(results) {
-                    const crimeData = results.data.map(row => ({
+                    crimeData = results.data.map(row => ({
                         station_name: row.station_name,
                         provincial_ranking: Number(row.provincial_ranking),
                         crimes_2025_q4: Number(row.crimes_2025_q4),
@@ -1243,8 +1245,6 @@
                 setupAreaSelector(crimeData);
                 initializeMap(crimeData);
                 loadNews();
-                
-                // Add smooth scroll behavior
                 document.documentElement.style.scrollBehavior = 'smooth';
             }, 1500);
         });
