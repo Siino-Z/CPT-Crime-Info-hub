@@ -2,7 +2,7 @@
 
 ## Overview
 
-**CPT-Crime-Info-hub** is an advanced crime intelligence dashboard for Cape Town, South Africa. It provides real-time analytics, predictive insights, and interactive visualizations to help communities, analysts, and authorities make informed decisions about safety and crime trends.
+**CPT-Crime-Info-hub** is an advanced crime intelligence dashboard for Cape Town, South Africa. It provides real-time analytics and interactive visualizations to help communities and indivisuals make informed decisions about safety and crime trends.
 
 ## Features
 
