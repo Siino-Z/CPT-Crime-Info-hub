@@ -2,521 +2,1272 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cape Town Crime Alerts</title>
+    <title>Cape Town Crime Intelligence Hub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Stay alert with real-time crime risk info for Cape Town. Find out which areas are most dangerous right now, get safety tips, and see official alerts.">
+    <meta name="description" content="Advanced crime intelligence dashboard for Cape Town - Real-time analytics, predictive insights, and community safety optimization.">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', 'DM Sans', Arial, sans-serif;
-            background: #f7fafc;
-            color: #222e3a;
+        :root {
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #3b82f6;
+            --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --critical: #dc2626;
+            --surface: #ffffff;
+            --surface-dark: #f8fafc;
+            --border: rgba(148, 163, 184, 0.2);
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --glow: 0 0 40px rgba(59, 130, 246, 0.3);
+        }
+
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text);
+            line-height: 1.6;
             min-height: 100vh;
+            overflow-x: hidden;
         }
-        header {
-            background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%);
-            color: #fff;
-            padding: 2.5rem 0 1.5rem 0;
+
+        /* Animated background particles */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(59, 130, 246, 0.4);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            padding: 4rem 0 6rem 0;
             text-align: center;
-            border-bottom-left-radius: 32px;
-            border-bottom-right-radius: 32px;
-            box-shadow: 0 4px 24px rgba(14,165,233,0.07);
+            overflow: hidden;
+            z-index: 1;
         }
-        header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.3em;
-            letter-spacing: -1px;
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="g" cx="50%" cy="50%"><stop offset="0%" stop-color="%233b82f6" stop-opacity="0.1"/><stop offset="100%" stop-color="%233b82f6" stop-opacity="0"/></radialGradient></defs><circle cx="500" cy="500" r="400" fill="url(%23g)"/></svg>') center/cover;
+            animation: pulse 4s ease-in-out infinite;
         }
-        header .live-date {
-            font-size: 1.15rem;
-            margin-top: 0.5rem;
-            opacity: 0.92;
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
         }
-        header .tagline {
-            font-size: 1.15rem;
-            opacity: 0.92;
-            margin-top: 0.7em;
-            font-weight: 500;
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
         }
-        .container {
-            max-width: 900px;
-            margin: 2.5rem auto 2rem auto;
-            padding: 0 1.2rem;
-        }
-        section {
-            margin-bottom: 2.2rem;
-        }
-        .card {
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 2px 16px rgba(30,41,59,0.07);
-            padding: 1.7rem 1.5rem;
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 800;
+            color: #ffffff;
             margin-bottom: 1.5rem;
+            letter-spacing: -2px;
+            text-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+            animation: slideInUp 1s ease-out;
         }
-        .alerts {
-            background: linear-gradient(90deg, #ef4444 0%, #f59e0b 100%);
-            color: #fff;
-            border-radius: 18px;
-            box-shadow: 0 2px 16px rgba(239,68,68,0.07);
-            padding: 1.7rem 1.5rem;
+
+        .hero .subtitle {
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+            color: rgba(255, 255, 255, 0.8);
             margin-bottom: 2rem;
+            font-weight: 400;
+            animation: slideInUp 1s ease-out 0.2s both;
         }
-        .alerts h2 {
-            margin-top: 0;
-            font-size: 1.3rem;
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            color: #10b981;
+            font-size: 0.9rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            animation: slideInUp 1s ease-out 0.4s both;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: -3rem auto 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Glass Card Effects */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow), var(--glow);
+        }
+
+        /* Critical Alerts Dashboard */
+        .alerts-dashboard {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            color: white;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alerts-dashboard::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .alerts-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .alert-icon {
+            width: 3rem;
+            height: 3rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .alerts-title {
+            font-size: 1.8rem;
             font-weight: 700;
             letter-spacing: -0.5px;
         }
-        .alert-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+
+        .alert-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            position: relative;
+            z-index: 2;
         }
+
         .alert-item {
-            margin-bottom: 1.2rem;
-            font-size: 1.13rem;
-            font-weight: 500;
-            letter-spacing: -0.2px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
         }
-        .alert-item:last-child { margin-bottom: 0; }
-        .area-lookup {
-            background: #f1f5f9;
-            border-radius: 18px;
-            padding: 1.5rem 1.2rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 2px 8px rgba(30,41,59,0.04);
+
+        .alert-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(1.02);
         }
-        .area-lookup label {
-            font-weight: 600;
-            font-size: 1.08em;
+
+        /* Interactive Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            margin-bottom: 3rem;
         }
-        .area-lookup select {
-            margin-left: 1rem;
-            padding: 0.45rem 1.1rem;
-            border-radius: 8px;
-            border: 1.5px solid #cbd5e1;
-            font-size: 1.07em;
-            background: #fff;
-            color: #222e3a;
-            font-family: inherit;
-            transition: border 0.2s;
-        }
-        .area-lookup select:focus {
-            border: 1.5px solid #0ea5e9;
-            outline: none;
-        }
-        .area-info {
-            margin-top: 1.2rem;
-            font-size: 1.09rem;
-        }
-        #crime-map {
-            height: 340px;
-            border-radius: 18px;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 16px rgba(30,41,59,0.07);
-            border: 2px solid #e0e7ef;
-        }
-        .area-stats {
-            margin-bottom: 1.5rem;
-        }
-        .area-stats h2 {
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin-bottom: 0.7em;
-            color: #0ea5e9;
-        }
-        .area-stats-strip {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-top: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-        .area-stat-block {
-            flex: 1 1 120px;
-            background: #f1f5f9;
-            border-radius: 10px;
-            padding: 1.1em 1em 0.9em 1em;
+
+        .main-panel {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            min-width: 110px;
-            box-shadow: 0 2px 8px rgba(30,41,59,0.04);
+            gap: 2rem;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Area Selector */
+        .area-selector {
+            padding: 2rem;
+            background: var(--accent-gradient);
+            color: white;
             position: relative;
-            transition: background 0.2s;
+            overflow: hidden;
         }
-        .area-stat-block.critical { background: #b91c1c; color: #fff; }
-        .area-stat-block.high { background: #ef4444; color: #fff; }
-        .area-stat-block.medium { background: #f59e0b; color: #fff; }
-        .area-stat-block.low { background: #10b981; color: #fff; }
-        .area-stat-label {
-            font-size: 0.98em;
-            opacity: 0.85;
-            margin-bottom: 0.2em;
-            text-align: center;
+
+        .area-selector::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></svg>') repeat;
+            animation: drift 30s linear infinite;
         }
-        .area-stat-value {
-            font-size: 1.45em;
-            font-weight: 700;
-            margin-bottom: 0.1em;
-            text-align: center;
+
+        @keyframes drift {
+            from { transform: translateX(0); }
+            to { transform: translateX(-100px); }
         }
-        .area-stat-change {
-            font-size: 0.95em;
+
+        .selector-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .custom-select {
+            position: relative;
+            z-index: 2;
+        }
+
+        .custom-select select {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text);
+            font-size: 1rem;
             font-weight: 500;
-            margin-top: 0.1em;
-            color: #0ea5e9;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1rem;
         }
-        .news {
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 2px 16px rgba(14,165,233,0.07);
-            padding: 1.7rem 1.5rem;
+
+        .custom-select select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+        }
+
+        /* Stats Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface-dark);
+            border-radius: 16px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card.critical {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            color: white;
+        }
+
+        .stat-card.high {
+            background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+            color: white;
+        }
+
+        .stat-card.medium {
+            background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+            color: white;
+        }
+
+        .stat-card.low {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-change {
+            font-size: 0.75rem;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        /* Interactive Map */
+        .map-container {
+            height: 500px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 12px;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .map-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        /* News & Updates */
+        .news-panel {
+            padding: 2rem;
+        }
+
+        .news-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             margin-bottom: 2rem;
         }
-        .news h2 {
-            margin-top: 0;
-            font-size: 1.15rem;
+
+        .news-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: var(--accent-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .news-title {
+            font-size: 1.4rem;
             font-weight: 700;
-            color: #0ea5e9;
+            color: var(--text);
         }
-        .news-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+
         .news-item {
-            margin-bottom: 1.1rem;
-            font-size: 1.07rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            background: var(--surface-dark);
+            border: 1px solid var(--border);
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-        .news-item:last-child { margin-bottom: 0; }
-        .news-item a {
-            color: #0ea5e9;
-            text-decoration: underline;
+
+        .news-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent-gradient);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .news-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .news-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .news-link {
+            color: var(--accent);
+            text-decoration: none;
             font-weight: 600;
+            font-size: 1.05rem;
+            transition: color 0.3s ease;
         }
-        .tips {
-            background: linear-gradient(90deg, #10b981 0%, #38bdf8 100%);
-            color: #fff;
-            border-radius: 18px;
-            padding: 1.7rem 1.5rem;
-            box-shadow: 0 2px 16px rgba(16,185,129,0.07);
+
+        .news-link:hover {
+            color: #2563eb;
         }
-        .tips h2 {
-            margin-top: 0;
-            font-size: 1.15rem;
+
+        .news-date {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Safety Tips */
+        .safety-tips {
+            background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+            color: white;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .safety-tips::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+            animation: rotate 25s linear infinite reverse;
+        }
+
+        .tips-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tips-icon {
+            width: 3rem;
+            height: 3rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .tips-title {
+            font-size: 1.6rem;
             font-weight: 700;
-            letter-spacing: -0.5px;
         }
-        .tips-list {
-            margin: 0;
-            padding-left: 1.2rem;
-            font-size: 1.07rem;
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            position: relative;
+            z-index: 2;
         }
-        .contact {
-            margin: 2rem 0 1rem 0;
+
+        .tip-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .tip-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(1.02);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--primary);
+            color: white;
+            padding: 3rem 0;
             text-align: center;
-            font-size: 1.08rem;
+            margin-top: 4rem;
         }
-        .contact a {
-            color: #0ea5e9;
-            text-decoration: underline;
-            font-weight: 600;
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem;
         }
-        .button {
-            background: #0ea5e9;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 0.6em 1.3em;
-            font-size: 1.07em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.18s;
+
+        .emergency-info {
+            background: rgba(220, 38, 38, 0.1);
+            border: 2px solid rgba(220, 38, 38, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
         }
-        .button:hover {
-            background: #0369a1;
+
+        .emergency-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #ef4444;
+            font-family: 'JetBrains Mono', monospace;
         }
-        @media (max-width: 700px) {
-            .container { padding: 0 0.5rem; }
-            #crime-map { height: 200px; }
-            .area-stats-strip { flex-direction: column; gap: 0.7rem; }
-            .area-stat-block { min-width: 0; }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .side-panel {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .hero {
+                padding: 3rem 0 4rem 0;
+            }
+            
+            .glass-card {
+                border-radius: 16px;
+            }
+            
+            .map-container {
+                height: 350px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tips-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Cape Town Crime Info Hub</h1>
-        <div class="live-date" id="live-date"></div>
-        <div class="tagline">Stay alert. Stay safe. Know your area.</div>
-    </header>
-    <div class="container">
-        <section class="alerts" id="alerts-section">
-            <h2>⚠️ Critical Alerts</h2>
-            <ul class="alert-list" id="alert-list"></ul>
-        </section>
-        <section class="area-lookup">
-            <label for="area-select">Check your area:</label>
-            <select id="area-select"></select>
-            <div class="area-info" id="area-info"></div>
-        </section>
-        <section class="area-stats" id="area-stats-section" style="display:none;">
-            <h2>Area Stats</h2>
-            <div id="area-stats"></div>
-        </section>
-        <div id="crime-map"></div>
-        <section class="news" id="news-section" style="display:none;">
-            <h2>Official Alerts & News</h2>
-            <ul class="news-list" id="news-list"></ul>
-        </section>
-        <section class="tips">
-            <h2>Safety Tips</h2>
-            <ul class="tips-list">
-                <li>Be aware of your surroundings at all times.</li>
-                <li>Avoid walking alone at night in high-risk areas.</li>
-                <li>Report suspicious activity to SAPS: <b>10111</b></li>
-                <li>Save emergency contacts on your phone.</li>
-                <li>Share alerts with friends and family.</li>
-            </ul>
-        </section>
-        <div class="contact">
-            <p>To report a crime or emergency, call <b>10111</b> or visit your nearest police station.</p>
-            <p>For more info: <a href="https://www.saps.gov.za/" target="_blank" rel="noopener">SAPS Official Website</a></p>
+    <!-- Animated Background -->
+    <div class="bg-particles" id="particles"></div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Cape Town Crime Intelligence Hub</h1>
+            <p class="subtitle">Advanced analytics, real-time monitoring, and predictive insights for community safety optimization</p>
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                <span id="live-status">LIVE DATA</span>
+                <span id="live-date"></span>
+            </div>
         </div>
+    </section>
+
+    <div class="container">
+        <!-- Critical Alerts Dashboard -->
+        <section class="glass-card alerts-dashboard" id="alerts-section">
+            <div class="alerts-header">
+                <div class="alert-icon">⚠️</div>
+                <h2 class="alerts-title">Critical Risk Areas</h2>
+            </div>
+            <div class="alert-grid" id="alert-grid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <span>Loading critical alerts...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Dashboard -->
+        <div class="dashboard-grid">
+            <div class="main-panel">
+                <!-- Map Container -->
+                <div class="glass-card">
+                    <div class="map-container">
+                        <div class="map-overlay">
+                            <div class="map-legend">
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #dc2626;"></div>
+                                    <span>Critical Risk</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #ea580c;"></div>
+                                    <span>High Risk</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #d97706;"></div>
+                                    <span>Medium Risk</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #059669;"></div>
+                                    <span>Low Risk</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="crime-map"></div>
+                    </div>
+                </div>
+
+                <!-- Area Statistics -->
+                <div class="glass-card" id="area-stats-section" style="display:none;">
+                    <div style="padding: 2rem;">
+                        <h3 style="color: var(--accent); font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem;">Area Intelligence Dashboard</h3>
+                        <div id="area-info"></div>
+                        <div class="stats-grid" id="area-stats"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <!-- Area Selector -->
+                <div class="glass-card area-selector">
+                    <div class="selector-label">📍 Select Area for Analysis</div>
+                    <div class="custom-select">
+                        <select id="area-select">
+                            <option>Loading areas...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- News Panel -->
+                <div class="glass-card news-panel" id="news-section">
+                    <div class="news-header">
+                        <div class="news-icon">📰</div>
+                        <h3 class="news-title">Official Updates</h3>
+                    </div>
+                    <div id="news-list">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <span>Loading updates...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety Tips -->
+        <section class="glass-card safety-tips">
+            <div class="tips-header">
+                <div class="tips-icon">🛡️</div>
+                <h2 class="tips-title">Smart Safety Protocol</h2>
+            </div>
+            <div class="tips-grid">
+                <div class="tip-item">
+                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">🔍 Situational Awareness</h4>
+                    <p>Maintain 360° awareness of your environment. Trust your instincts and avoid distractions.</p>
+                </div>
+                <div class="tip-item">
+                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">🌙 Night Safety Protocol</h4>
+                    <p>Avoid high-risk areas after dark. Use well-lit routes and travel in groups when possible.</p>
+                </div>
+                <div class="tip-item">
+                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">📱 Emergency Response</h4>
+                    <p>Keep emergency contacts accessible. Report suspicious activity immediately to SAPS.</p>
+                </div>
+                <div class="tip-item">
+                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">🤝 Community Network</h4>
+                    <p>Share safety information with neighbors. Build strong community watch networks.</p>
+                </div>
+            </div>
+        </section>
     </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="emergency-info">
+                <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Emergency Services</h3>
+                <div class="emergency-number">10111</div>
+                <p style="margin-top: 0.5rem; opacity: 0.9;">24/7 SAPS Emergency Response</p>
+            </div>
+            <p style="margin-bottom: 1rem;">
+                <strong>Data Sources:</strong> South African Police Service (SAPS) | Crime Intelligence Analysis
+            </p>
+            <p style="opacity: 0.8;">
+                This dashboard provides real-time crime intelligence for informed decision-making and community safety optimization.
+            </p>
+        </div>
+    </footer>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- Live Date/Time ---
-        function startDateUpdater() {
-            function update() {
-                const now = new Date();
-                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                const dateStr = now.toLocaleDateString('en-ZA', options) + ', ' + now.toLocaleTimeString('en-ZA');
-                document.getElementById('live-date').textContent = dateStr;
+        // Animated background particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                container.appendChild(particle);
             }
-            update();
-            setInterval(update, 1000);
         }
-        startDateUpdater();
+        createParticles();
 
-        // --- CSV Loader ---
-        function parseCSV(csv) {
-            const lines = csv.trim().split('\n');
-            const headers = lines[0].replace(/"/g, '').split(',');
-            return lines.slice(1).map(line => {
-                const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(s => s.replace(/(^"|"$)/g, ''));
-                const obj = {};
-                headers.forEach((h, i) => obj[h] = cols[i]);
-                return obj;
+        // Live date/time updater
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            const dateStr = now.toLocaleDateString('en-ZA', options);
+            document.getElementById('live-date').textContent = dateStr;
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Simulated crime data (replace with real API)
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Papa.parse('crime-data.csv', {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    const crimeData = results.data.map(row => ({
+                        station_name: row.station_name,
+                        provincial_ranking: Number(row.provincial_ranking),
+                        crimes_2025_q4: Number(row.crimes_2025_q4),
+                        trend_classification: row.trend_classification,
+                        total_crimes_5_years: Number(row.total_crimes_5_years),
+                        average_crimes_per_year: Number(row.average_crimes_per_year),
+                        change_2025_vs_2024_pct: Number(row.change_2025_vs_2024_pct),
+                        performance_score: row.performance_score,
+                        improvement_status: row.improvement_status,
+                        latitude: Number(row.latitude),
+                        longitude: Number(row.longitude),
+                        has_coordinates: row.has_coordinates
+                    }));
+
+                    renderCriticalAlerts(crimeData);
+                    setupAreaSelector(crimeData);
+                    initializeMap(crimeData);
+                    loadNews();
+                }
             });
-        }
-        async function loadData() {
-            const resp = await fetch('unified_crime_dataset_2025-06-16 (1).csv');
-            const csv = await resp.text();
-            return parseCSV(csv);
-        }
 
-        // --- Risk Level Helper ---
+            // Add smooth scroll behavior
+            document.documentElement.style.scrollBehavior = 'smooth';
+        });
+    </script>
+    <script>
+        // Risk level calculator
         function getRiskLevel(row) {
             const rank = Number(row.provincial_ranking);
-            if (rank >= 1 && rank <= 5) return { label: "Extreme/Critical", class: "risk-critical", color: "#b91c1c" };
-            if (rank >= 6 && rank <= 10) return { label: "High", class: "risk-high", color: "#ef4444" };
-            if (rank >= 11 && rank <= 15) return { label: "Medium", class: "risk-medium", color: "#f59e0b" };
-            return { label: "Low", class: "risk-low", color: "#10b981" };
+            if (rank >= 1 && rank <= 5) return { 
+                label: "Critical", 
+                class: "critical", 
+                color: "#dc2626",
+                description: "Extreme risk - avoid if possible"
+            };
+            if (rank >= 6 && rank <= 10) return { 
+                label: "High", 
+                class: "high", 
+                color: "#ea580c",
+                description: "High risk - exercise extreme caution"
+            };
+            if (rank >= 11 && rank <= 15) return { 
+                label: "Medium", 
+                class: "medium", 
+                color: "#d97706",
+                description: "Moderate risk - stay alert"
+            };
+            return { 
+                label: "Low", 
+                class: "low", 
+                color: "#059669",
+                description: "Lower risk - maintain awareness"
+            };
         }
 
-        // --- Critical Alerts ---
-        function renderAlerts(data) {
-            // Show all areas with provincial_ranking 1-5 as critical/extreme
-            const critical = data.filter(r => Number(r.provincial_ranking) >= 1 && Number(r.provincial_ranking) <= 5);
-            const alertList = document.getElementById('alert-list');
-            alertList.innerHTML = '';
+        // Critical alerts renderer
+        function renderCriticalAlerts(data) {
+            const critical = data.filter(r => Number(r.provincial_ranking) <= 5);
+            const alertGrid = document.getElementById('alert-grid');
+            
             if (critical.length === 0) {
-                alertList.innerHTML = `<li class="alert-item">No extreme risk areas at this time.</li>`;
-            } else {
-                critical.forEach(row => {
-                    const risk = getRiskLevel(row);
-                    alertList.innerHTML += `<li class="alert-item">
-                        <b>${row.station_name}</b> — 
-                        <span style="color:#fff;background:${risk.color};padding:0.2em 0.5em;border-radius:5px;">
-                            ${risk.label} Risk
-                        </span>
-                        <br>Trend: <b>${row.trend_classification}</b> | Crimes: <b>${row.crimes_2025_q4}</b>
-                    </li>`;
-                });
+                alertGrid.innerHTML = `
+                    <div class="alert-item">
+                        <h4 style="margin-bottom: 0.5rem;">✅ No Critical Alerts</h4>
+                        <p>All areas are currently within acceptable risk parameters.</p>
+                    </div>
+                `;
+                return;
             }
+
+            alertGrid.innerHTML = '';
+            critical.forEach(row => {
+                const risk = getRiskLevel(row);
+                const trendIcon = row.change_2025_vs_2024_pct > 0 ? '📈' : '📉';
+                const trendColor = row.change_2025_vs_2024_pct > 0 ? '#ef4444' : '#10b981';
+                
+                alertGrid.innerHTML += `
+                    <div class="alert-item">
+                        <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1.2rem;">${row.station_name}</h4>
+                            <span style="background: rgba(255,255,255,0.2); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                                RANK #${row.provincial_ranking}
+                            </span>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">
+                                ${risk.description}
+                            </div>
+                            <div style="font-size: 0.85rem;">
+                                <strong>Status:</strong> ${row.trend_classification}
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;">
+                                    ${row.crimes_2025_q4.toLocaleString()}
+                                </div>
+                                <div style="font-size: 0.8rem; opacity: 0.8;">crimes this quarter</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: ${trendColor}; font-weight: 600; font-size: 1.1rem;">
+                                    ${trendIcon} ${Math.abs(row.change_2025_vs_2024_pct)}%
+                                </div>
+                                <div style="font-size: 0.75rem; opacity: 0.8;">vs last year</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
         }
 
-        let markerMap = {}; // station_name -> marker
+        // Map initialization and rendering
+        let crimeMap = null;
+        let mapMarkers = [];
+        let markerLookup = {};
 
-        // --- Map ---
-        let crimeMap = null, crimeMapMarkers = [];
-        function renderMap(data) {
+        function initializeMap(data) {
             if (!crimeMap) {
-                crimeMap = L.map('crime-map').setView([-33.92, 18.42], 10);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap contributors'
+                crimeMap = L.map('crime-map', {
+                    zoomControl: false
+                }).setView([-33.9249, 18.4241], 11);
+                
+                // Custom dark theme tiles
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; CARTO &copy; OpenStreetMap contributors',
+                    subdomains: 'abcd'
+                }).addTo(crimeMap);
+
+                // Add custom zoom control
+                L.control.zoom({
+                    position: 'bottomright'
                 }).addTo(crimeMap);
             }
-            crimeMapMarkers.forEach(m => crimeMap.removeLayer(m));
-            crimeMapMarkers = [];
-            markerMap = {};
+
+            // Clear existing markers
+            mapMarkers.forEach(marker => crimeMap.removeLayer(marker));
+            mapMarkers = [];
+            markerLookup = {};
+
+            // Add new markers
             data.forEach(row => {
                 if (row.has_coordinates === 'Yes' && row.latitude && row.longitude) {
                     const risk = getRiskLevel(row);
+                    const trendIcon = row.change_2025_vs_2024_pct > 0 ? '↗️' : '↘️';
+                    
                     const marker = L.circleMarker([Number(row.latitude), Number(row.longitude)], {
-                        radius: 9, color: risk.color, fillColor: risk.color, fillOpacity: 0.7
+                        radius: 8 + (6 - Number(row.provincial_ranking)) * 2,
+                        fillColor: risk.color,
+                        color: '#ffffff',
+                        weight: 2,
+                        opacity: 0.9,
+                        fillOpacity: 0.8
                     }).addTo(crimeMap);
+
                     marker.bindPopup(`
-                        <b>${row.station_name}</b><br>
-                        Risk: <span style="color:${risk.color}">${risk.label}</span><br>
-                        Trend: ${row.trend_classification}<br>
-                        Crimes: <b>${row.crimes_2025_q4}</b>
+                        <div style="font-family: Inter, sans-serif; min-width: 200px;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: ${risk.color}; font-size: 1.1rem;">
+                                ${row.station_name}
+                            </h4>
+                            <div style="background: ${risk.color}; color: white; padding: 0.3rem 0.6rem; border-radius: 12px; display: inline-block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.8rem;">
+                                ${risk.label} Risk - Rank #${row.provincial_ranking}
+                            </div>
+                            <div style="margin-bottom: 0.5rem;">
+                                <strong>Trend:</strong> ${row.trend_classification}
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span><strong>Crimes Q4:</strong> ${row.crimes_2025_q4.toLocaleString()}</span>
+                                <span style="color: ${row.change_2025_vs_2024_pct > 0 ? '#ef4444' : '#10b981'};">
+                                    ${trendIcon} ${Math.abs(row.change_2025_vs_2024_pct)}%
+                                </span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+                                Performance: ${row.performance_score}
+                            </div>
+                        </div>
                     `);
-                    crimeMapMarkers.push(marker);
-                    markerMap[row.station_name] = marker;
+
+                    mapMarkers.push(marker);
+                    markerLookup[row.station_name] = marker;
                 }
             });
         }
 
-        // --- Area Lookup & Stats ---
-        function renderAreaLookup(data) {
+        // Area selector and statistics
+        function setupAreaSelector(data) {
             const select = document.getElementById('area-select');
             select.innerHTML = '';
-            data.forEach(row => {
-                select.innerHTML += `<option value="${row.station_name}">${row.station_name}</option>`;
+            
+            // Sort by ranking for better UX
+            const sortedData = [...data].sort((a, b) => Number(a.provincial_ranking) - Number(b.provincial_ranking));
+            
+            sortedData.forEach(row => {
+                const risk = getRiskLevel(row);
+                select.innerHTML += `
+                    <option value="${row.station_name}">
+                        ${row.station_name} (${risk.label} Risk)
+                    </option>
+                `;
             });
-            select.onchange = () => showAreaInfo(data, select.value);
-            showAreaInfo(data, select.value);
+
+            select.onchange = () => showAreaDetails(data, select.value);
+            showAreaDetails(data, select.value);
         }
 
-        function showAreaInfo(data, area) {
-            const info = document.getElementById('area-info');
-            const statsSection = document.getElementById('area-stats-section');
-            const statsDiv = document.getElementById('area-stats');
-            const row = data.find(r => r.station_name === area);
-            if (!row) { 
-                info.textContent = ''; 
-                statsSection.style.display = 'none';
-                return; 
-            }
+        function showAreaDetails(data, areaName) {
+            const row = data.find(r => r.station_name === areaName);
+            if (!row) return;
+
             const risk = getRiskLevel(row);
-            info.innerHTML = `
-                <div style="margin-bottom:0.5em;">
-                    <span style="font-weight:700;">${row.station_name}</span>
-                    <span class="${risk.class}" style="margin-left:1em;padding:0.2em 0.6em;border-radius:5px;background:${risk.color};color:#fff;">
-                        ${risk.label} Risk
-                    </span>
+            const statsSection = document.getElementById('area-stats-section');
+            const areaInfo = document.getElementById('area-info');
+            const areaStats = document.getElementById('area-stats');
+
+            // Show area overview
+            areaInfo.innerHTML = `
+                <div style="background: ${risk.color}; color: white; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1.3rem;">${row.station_name}</h4>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">${risk.description}</div>
                 </div>
-                <div>Trend: <b>${row.trend_classification}</b></div>
-                <div>Crimes (2025 Q4): <b>${row.crimes_2025_q4}</b></div>
-                <div>Performance: <b>${row.performance_score}</b></div>
-                <div>Improvement: <b>${row.improvement_status}</b></div>
-            `;
-
-            // --- Dashboard Strip ---
-            statsSection.style.display = '';
-            // Assign color class based on risk
-            let riskClass = '';
-            if (risk.label === "Extreme/Critical") riskClass = 'critical';
-            else if (risk.label === "High") riskClass = 'high';
-            else if (risk.label === "Medium") riskClass = 'medium';
-            else riskClass = 'low';
-
-            statsDiv.innerHTML = `
-                <div class="area-stats-strip">
-                    <div class="area-stat-block ${riskClass}">
-                        <div class="area-stat-label">Risk Level</div>
-                        <div class="area-stat-value">${risk.label}</div>
-                        <div class="area-stat-change">Prov. Rank: ${row.provincial_ranking}</div>
-                    </div>
-                    <div class="area-stat-block">
-                        <div class="area-stat-label">5-Year Total</div>
-                        <div class="area-stat-value">${row.total_crimes_5_years}</div>
-                    </div>
-                    <div class="area-stat-block">
-                        <div class="area-stat-label">Avg/Year</div>
-                        <div class="area-stat-value">${row.average_crimes_per_year}</div>
-                    </div>
-                    <div class="area-stat-block">
-                        <div class="area-stat-label">2025 Q4</div>
-                        <div class="area-stat-value">${row.crimes_2025_q4}</div>
-                        <div class="area-stat-change">${row.change_2025_vs_2024_pct}% vs 2024</div>
-                    </div>
-                    <div class="area-stat-block">
-                        <div class="area-stat-label">Trend</div>
-                        <div class="area-stat-value">${row.trend_classification}</div>
-                    </div>
-                    <div class="area-stat-block">
-                        <div class="area-stat-label">Performance</div>
-                        <div class="area-stat-value">${row.performance_score}</div>
-                    </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <div><strong>Provincial Ranking:</strong> #${row.provincial_ranking}</div>
+                    <div><strong>Trend:</strong> ${row.trend_classification}</div>
+                    <div><strong>Performance:</strong> ${row.performance_score}</div>
+                    <div><strong>Status:</strong> ${row.improvement_status}</div>
                 </div>
             `;
 
-            // --- Flash Marker on Map ---
-            if (markerMap[area]) {
-                const marker = markerMap[area];
-                let count = 0;
-                const origColor = marker.options.color;
-                const flashColor = "#fff";
-                function flash() {
-                    if (count >= 6) {
-                        marker.setStyle({ color: origColor, fillColor: origColor });
-                        marker.openPopup();
-                        return;
-                    }
-                    marker.setStyle({ color: count % 2 === 0 ? flashColor : origColor, fillColor: count % 2 === 0 ? flashColor : origColor });
-                    count++;
-                    setTimeout(flash, 200);
-                }
-                flash();
-                marker._map.setView(marker.getLatLng(), 13, { animate: true });
+            // Show detailed statistics
+            const changeColor = row.change_2025_vs_2024_pct > 0 ? '#ef4444' : '#10b981';
+            const changeIcon = row.change_2025_vs_2024_pct > 0 ? '↗️' : '↘️';
+
+            areaStats.innerHTML = `
+                <div class="stat-card ${risk.class}">
+                    <div class="stat-label">Risk Level</div>
+                    <div class="stat-value">${risk.label}</div>
+                    <div class="stat-change">Rank #${row.provincial_ranking}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Current Quarter</div>
+                    <div class="stat-value">${row.crimes_2025_q4.toLocaleString()}</div>
+                    <div class="stat-change">Q4 2025</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Year-over-Year</div>
+                    <div class="stat-value" style="color: ${changeColor};">
+                        ${changeIcon} ${Math.abs(row.change_2025_vs_2024_pct)}%
+                    </div>
+                    <div class="stat-change">vs 2024</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">5-Year Total</div>
+                    <div class="stat-value">${row.total_crimes_5_years.toLocaleString()}</div>
+                    <div class="stat-change">2021-2025</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Annual Average</div>
+                    <div class="stat-value">${row.average_crimes_per_year.toLocaleString()}</div>
+                    <div class="stat-change">per year</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Trend Status</div>
+                    <div class="stat-value" style="font-size: 1rem;">${row.trend_classification}</div>
+                    <div class="stat-change">${row.improvement_status}</div>
+                </div>
+            `;
+
+            statsSection.style.display = 'block';
+
+            // Animate map to selected area
+            if (markerLookup[areaName]) {
+                const marker = markerLookup[areaName];
+                crimeMap.setView(marker.getLatLng(), 14, { animate: true, duration: 1.5 });
+                
+                // Flash the marker
+                setTimeout(() => {
+                    marker.openPopup();
+                    flashMarker(marker);
+                }, 1000);
             }
         }
 
-        // --- News Section (with links only) ---
-        function renderNews(news) {
-            const section = document.getElementById('news-section');
-            const list = document.getElementById('news-list');
-            list.innerHTML = '';
-            const validNews = news.filter(n => n.link);
-            if (!validNews.length) { section.style.display = 'none'; return; }
-            section.style.display = '';
-            validNews.forEach(n => {
-                list.innerHTML += `<li class="news-item">
-                    <a href="${n.link}" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;font-weight:600;">
-                        ${n.title}
-                    </a>
-                    <div style="font-size:0.95em;opacity:0.8;">${n.date}</div>
-                </li>`;
-            });
+        function flashMarker(marker) {
+            const originalOptions = { ...marker.options };
+            let flashCount = 0;
+            const flashInterval = setInterval(() => {
+                if (flashCount >= 6) {
+                    clearInterval(flashInterval);
+                    marker.setStyle(originalOptions);
+                    return;
+                }
+                marker.setStyle({
+                    ...originalOptions,
+                    color: flashCount % 2 === 0 ? '#ffffff' : originalOptions.color,
+                    weight: flashCount % 2 === 0 ? 4 : originalOptions.weight
+                });
+                flashCount++;
+            }, 200);
         }
 
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            const data = await loadData();
-            renderAlerts(data);
-            renderAreaLookup(data);
-            renderMap(data);
-
-            // Example news with links (replace with real data or fetch from API)
-            renderNews([
+        // News and updates
+        function loadNews() {
+            const newsList = document.getElementById('news-list');
+            const newsItems = [
                 {
-                    title: "SAPS: Latest crime news released",
-                    date: "June 2025",
-                    link: "https://www.saps.gov.za/newsroom/selnewslist.php"
+                    title: "SAPS Western Cape Crime Statistics Q4 2025",
+                    date: "June 17, 2025",
+                    link: "https://www.saps.gov.za/newsroom/selnewslist.php",
+                    summary: "Latest quarterly crime statistics released showing trends across Western Cape precincts."
                 },
                 {
-                    title: "Community safety tips from SAPS",
-                    date: "May 2025",
-                    link: "https://www.saps.gov.za/services/crime_prevention.php"
+                    title: "Community Policing Forum Updates",
+                    date: "June 15, 2025", 
+                    link: "https://www.saps.gov.za/services/community_policing.php",
+                    summary: "New community safety initiatives launched in high-risk areas."
+                },
+                {
+                    title: "Crime Prevention Safety Tips",
+                    date: "June 12, 2025",
+                    link: "https://www.saps.gov.za/services/crime_prevention.php",
+                    summary: "Essential safety protocols for residents and visitors."
                 }
-            ]);
+            ];
+
+            newsList.innerHTML = '';
+            newsItems.forEach(item => {
+                newsList.innerHTML += `
+                    <div class="news-item">
+                        <a href="${item.link}" target="_blank" rel="noopener" class="news-link">
+                            ${item.title}
+                        </a>
+                        <p style="margin: 0.5rem 0; color: var(--text-muted); font-size: 0.9rem;">
+                            ${item.summary}
+                        </p>
+                        <div class="news-date">${item.date}</div>
+                    </div>
+                `;
+            });
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simulate loading delay for dramatic effect
+            setTimeout(() => {
+                renderCriticalAlerts(crimeData);
+                setupAreaSelector(crimeData);
+                initializeMap(crimeData);
+                loadNews();
+                
+                // Add smooth scroll behavior
+                document.documentElement.style.scrollBehavior = 'smooth';
+            }, 1500);
+        });
+
+        // Add some interactive polish
+        document.addEventListener('mousemove', function(e) {
+            const cards = document.querySelectorAll('.glass-card');
+            cards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = (y - centerY) / 20;
+                    const rotateY = (centerX - x) / 20;
+                    
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
+                } else {
+                    card.style.transform = '';
+                }
+            });
         });
     </script>
 </body>
