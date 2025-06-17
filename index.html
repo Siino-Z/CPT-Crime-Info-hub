@@ -105,22 +105,35 @@
             return parseCSV(csv);
         }
 
+        // --- Risk Level Helper ---
+        function getRiskLevel(row) {
+            const rank = Number(row.provincial_ranking);
+            if (rank >= 1 && rank <= 5) return { label: "Extreme/Critical", class: "risk-critical", color: "#b91c1c" };
+            if (rank >= 6 && rank <= 10) return { label: "High", class: "risk-high", color: "#ef4444" };
+            if (rank >= 11 && rank <= 15) return { label: "Medium", class: "risk-medium", color: "#f59e0b" };
+            return { label: "Low", class: "risk-low", color: "#10b981" };
+        }
+
         // --- Critical Alerts ---
         function renderAlerts(data) {
-            // Show top 5 areas with highest crimes in latest quarter, and/or High Priority
-            const q = 'crimes_2025_q4';
-            const sorted = [...data].sort((a, b) => Number(b[q]) - Number(a[q]));
-            const highRisk = sorted.filter(r => r.needs_attention === 'High Priority');
-            const top = sorted.slice(0, 5);
-            const alerts = highRisk.length ? highRisk : top;
+            // Show all areas with provincial_ranking 1-5 as critical/extreme
+            const critical = data.filter(r => Number(r.provincial_ranking) >= 1 && Number(r.provincial_ranking) <= 5);
             const alertList = document.getElementById('alert-list');
             alertList.innerHTML = '';
-            alerts.forEach(row => {
-                alertList.innerHTML += `<li class="alert-item">
-                    <b>${row.station_name}</b> — <span style="color:#fff;background:#ef4444;padding:0.2em 0.5em;border-radius:5px;">${row.needs_attention || 'High Risk'}</span>
-                    <br>Trend: <b>${row.trend_classification}</b> | Crimes: <b>${row[q]}</b>
-                </li>`;
-            });
+            if (critical.length === 0) {
+                alertList.innerHTML = `<li class="alert-item">No extreme risk areas at this time.</li>`;
+            } else {
+                critical.forEach(row => {
+                    const risk = getRiskLevel(row);
+                    alertList.innerHTML += `<li class="alert-item">
+                        <b>${row.station_name}</b> — 
+                        <span style="color:#fff;background:${risk.color};padding:0.2em 0.5em;border-radius:5px;">
+                            ${risk.label} Risk
+                        </span>
+                        <br>Trend: <b>${row.trend_classification}</b> | Crimes: <b>${row.crimes_2025_q4}</b>
+                    </li>`;
+                });
+            }
         }
 
         // --- Area Lookup ---
@@ -137,17 +150,16 @@
             const info = document.getElementById('area-info');
             const row = data.find(r => r.station_name === area);
             if (!row) { info.textContent = ''; return; }
-            const q = 'crimes_2025_q4';
-            let riskClass = 'risk-low';
-            if (row.needs_attention === 'High Priority') riskClass = 'risk-high';
-            else if (row.needs_attention === 'Monitor') riskClass = 'risk-medium';
+            const risk = getRiskLevel(row);
             info.innerHTML = `
                 <div style="margin-bottom:0.5em;">
                     <span style="font-weight:700;">${row.station_name}</span>
-                    <span class="${riskClass}" style="margin-left:1em;padding:0.2em 0.6em;border-radius:5px;background:#ef4444;color:#fff;">${row.needs_attention || 'Unknown'}</span>
+                    <span class="${risk.class}" style="margin-left:1em;padding:0.2em 0.6em;border-radius:5px;background:${risk.color};color:#fff;">
+                        ${risk.label} Risk
+                    </span>
                 </div>
                 <div>Trend: <b>${row.trend_classification}</b></div>
-                <div>Crimes (2025 Q4): <b>${row[q]}</b></div>
+                <div>Crimes (2025 Q4): <b>${row.crimes_2025_q4}</b></div>
                 <div>Performance: <b>${row.performance_score}</b></div>
                 <div>Improvement: <b>${row.improvement_status}</b></div>
             `;
@@ -164,20 +176,17 @@
             }
             crimeMapMarkers.forEach(m => crimeMap.removeLayer(m));
             crimeMapMarkers = [];
-            const q = 'crimes_2025_q4';
             data.forEach(row => {
                 if (row.has_coordinates === 'Yes' && row.latitude && row.longitude) {
-                    let color = '#10b981';
-                    if (row.needs_attention === 'High Priority') color = '#ef4444';
-                    else if (row.needs_attention === 'Monitor') color = '#f59e0b';
+                    const risk = getRiskLevel(row);
                     const marker = L.circleMarker([Number(row.latitude), Number(row.longitude)], {
-                        radius: 9, color, fillColor: color, fillOpacity: 0.7
+                        radius: 9, color: risk.color, fillColor: risk.color, fillOpacity: 0.7
                     }).addTo(crimeMap);
                     marker.bindPopup(`
                         <b>${row.station_name}</b><br>
-                        Risk: <span style="color:${color}">${row.needs_attention}</span><br>
+                        Risk: <span style="color:${risk.color}">${risk.label}</span><br>
                         Trend: ${row.trend_classification}<br>
-                        Crimes: <b>${row[q]}</b>
+                        Crimes: <b>${row.crimes_2025_q4}</b>
                     `);
                     crimeMapMarkers.push(marker);
                 }
@@ -212,9 +221,9 @@
             // Example news with links (replace with real data or fetch from API)
             renderNews([
                 {
-                    title: "SAPS: Latest crime stats for Cape Town released",
+                    title: "SAPS: Latest crime news released",
                     date: "June 2025",
-                    link: "https://www.saps.gov.za/newsroom/msspeechdetail.php?nid=50752"
+                    link: "https://www.saps.gov.za/newsroom/selnewslist.php"
                 },
                 {
                     title: "Community safety tips from SAPS",
