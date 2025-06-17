@@ -6,67 +6,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Stay alert with real-time crime risk info for Cape Town. Find out which areas are most dangerous right now, get safety tips, and see official alerts.">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #1e293b; color: #fff; margin: 0; }
-        header { background: #0ea5e9; color: #fff; padding: 1.5rem 0; text-align: center; }
-        .live-date { font-size: 1.1rem; margin-top: 0.5rem; }
-        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-        .alerts { background: #ef4444; color: #fff; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
-        .alerts h2 { margin-top: 0; }
-        .alert-list { list-style: none; padding: 0; margin: 0; }
-        .alert-item { margin-bottom: 1rem; font-size: 1.2rem; }
-        .alert-item:last-child { margin-bottom: 0; }
-        .area-lookup { background: #334155; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
-        .area-lookup label { font-weight: 600; }
-        .area-lookup select { margin-left: 1rem; padding: 0.3rem; border-radius: 5px; border: none; }
-        .area-info { margin-top: 1rem; font-size: 1.1rem; }
-        #crime-map { height: 350px; border-radius: 10px; margin-bottom: 2rem; }
-        .news { background: #0ea5e9; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
-        .news h2 { margin-top: 0; }
-        .news-list { list-style: none; padding: 0; margin: 0; }
-        .news-item { margin-bottom: 1rem; }
-        .news-item:last-child { margin-bottom: 0; }
-        .tips { background: #10b981; color: #fff; border-radius: 10px; padding: 1.5rem; }
-        .tips h2 { margin-top: 0; }
-        .tips-list { margin: 0; padding-left: 1.2rem; }
-        .contact { margin: 2rem 0 1rem 0; text-align: center; }
-        .contact a { color: #0ea5e9; text-decoration: underline; }
-        /* Area Stats Card Styles */
-        .area-stats-card {
-            background: #222e3a;
-            border-radius: 10px;
-            padding: 1.2rem 1.5rem;
-            margin-top: 1rem;
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            max-width: 420px;
+        body {
+            font-family: 'Inter', 'DM Sans', Arial, sans-serif;
+            background: #f7fafc;
+            color: #222e3a;
+            margin: 0;
+            min-height: 100vh;
         }
-        .area-stats-list {
+        header {
+            background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%);
+            color: #fff;
+            padding: 2.5rem 0 1.5rem 0;
+            text-align: center;
+            border-bottom-left-radius: 32px;
+            border-bottom-right-radius: 32px;
+            box-shadow: 0 4px 24px rgba(14,165,233,0.07);
+        }
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.3em;
+            letter-spacing: -1px;
+        }
+        header .live-date {
+            font-size: 1.15rem;
+            margin-top: 0.5rem;
+            opacity: 0.92;
+        }
+        header .tagline {
+            font-size: 1.15rem;
+            opacity: 0.92;
+            margin-top: 0.7em;
+            font-weight: 500;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2.5rem auto 2rem auto;
+            padding: 0 1.2rem;
+        }
+        section {
+            margin-bottom: 2.2rem;
+        }
+        .card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 2px 16px rgba(30,41,59,0.07);
+            padding: 1.7rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .alerts {
+            background: linear-gradient(90deg, #ef4444 0%, #f59e0b 100%);
+            color: #fff;
+            border-radius: 18px;
+            box-shadow: 0 2px 16px rgba(239,68,68,0.07);
+            padding: 1.7rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .alerts h2 {
+            margin-top: 0;
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .alert-list {
             list-style: none;
             padding: 0;
             margin: 0;
         }
-        .area-stats-list li {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.7em;
+        .alert-item {
+            margin-bottom: 1.2rem;
+            font-size: 1.13rem;
+            font-weight: 500;
+            letter-spacing: -0.2px;
+        }
+        .alert-item:last-child { margin-bottom: 0; }
+        .area-lookup {
+            background: #f1f5f9;
+            border-radius: 18px;
+            padding: 1.5rem 1.2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(30,41,59,0.04);
+        }
+        .area-lookup label {
+            font-weight: 600;
             font-size: 1.08em;
         }
-        .area-stats-list li:last-child { margin-bottom: 0; }
-        .area-stats-icon {
-            width: 1.5em;
-            text-align: center;
-            margin-right: 0.7em;
-            opacity: 0.85;
-            font-size: 1.2em;
+        .area-lookup select {
+            margin-left: 1rem;
+            padding: 0.45rem 1.1rem;
+            border-radius: 8px;
+            border: 1.5px solid #cbd5e1;
+            font-size: 1.07em;
+            background: #fff;
+            color: #222e3a;
+            font-family: inherit;
+            transition: border 0.2s;
         }
-        .area-stats-label {
-            flex: 1;
-            color: #cbd5e1;
+        .area-lookup select:focus {
+            border: 1.5px solid #0ea5e9;
+            outline: none;
         }
-        .area-stats-value {
-            font-weight: 600;
-            color: #fff;
+        .area-info {
+            margin-top: 1.2rem;
+            font-size: 1.09rem;
+        }
+        #crime-map {
+            height: 340px;
+            border-radius: 18px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 16px rgba(30,41,59,0.07);
+            border: 2px solid #e0e7ef;
+        }
+        .area-stats {
+            margin-bottom: 1.5rem;
+        }
+        .area-stats h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.7em;
+            color: #0ea5e9;
         }
         .area-stats-strip {
             display: flex;
@@ -77,14 +137,14 @@
         }
         .area-stat-block {
             flex: 1 1 120px;
-            background: #334155;
-            border-radius: 8px;
+            background: #f1f5f9;
+            border-radius: 10px;
             padding: 1.1em 1em 0.9em 1em;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-width: 110px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            box-shadow: 0 2px 8px rgba(30,41,59,0.04);
             position: relative;
             transition: background 0.2s;
         }
@@ -110,12 +170,79 @@
             margin-top: 0.1em;
             color: #0ea5e9;
         }
-        @media (max-width: 600px) {
-            .container { padding: 0 0.5rem; }
-            #crime-map { height: 220px; }
-            .area-stats-card { padding: 1rem; }
+        .news {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 2px 16px rgba(14,165,233,0.07);
+            padding: 1.7rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .news h2 {
+            margin-top: 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0ea5e9;
+        }
+        .news-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .news-item {
+            margin-bottom: 1.1rem;
+            font-size: 1.07rem;
+        }
+        .news-item:last-child { margin-bottom: 0; }
+        .news-item a {
+            color: #0ea5e9;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+        .tips {
+            background: linear-gradient(90deg, #10b981 0%, #38bdf8 100%);
+            color: #fff;
+            border-radius: 18px;
+            padding: 1.7rem 1.5rem;
+            box-shadow: 0 2px 16px rgba(16,185,129,0.07);
+        }
+        .tips h2 {
+            margin-top: 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .tips-list {
+            margin: 0;
+            padding-left: 1.2rem;
+            font-size: 1.07rem;
+        }
+        .contact {
+            margin: 2rem 0 1rem 0;
+            text-align: center;
+            font-size: 1.08rem;
+        }
+        .contact a {
+            color: #0ea5e9;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+        .button {
+            background: #0ea5e9;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.6em 1.3em;
+            font-size: 1.07em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.18s;
+        }
+        .button:hover {
+            background: #0369a1;
         }
         @media (max-width: 700px) {
+            .container { padding: 0 0.5rem; }
+            #crime-map { height: 200px; }
             .area-stats-strip { flex-direction: column; gap: 0.7rem; }
             .area-stat-block { min-width: 0; }
         }
@@ -123,9 +250,9 @@
 </head>
 <body>
     <header>
-        <h1>Cape Town Crime Alerts</h1>
+        <h1>Cape Town Crime Info Hub</h1>
         <div class="live-date" id="live-date"></div>
-        <div style="font-size:1.1rem;opacity:0.85;">Stay alert. Stay safe. Know your area.</div>
+        <div class="tagline">Stay alert. Stay safe. Know your area.</div>
     </header>
     <div class="container">
         <section class="alerts" id="alerts-section">
