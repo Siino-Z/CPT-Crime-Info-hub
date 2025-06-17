@@ -7,7 +7,7 @@
 ## Features
 
 - Interactive map of crime incidents and hotspots
-- Real-time and historical crime statistics
+- Historical crime statistics
 - Area selector for focused analysis
 - Critical alerts and trend detection
 - Community safety tips and emergency information
