@@ -2,580 +2,78 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Cape Town Crime Alerts</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cape Town Crime Hub</title>
-    <meta name="author" content="Sinothabo Zwane">
-    <meta name="description" content="A project by Sinothabo Zwane to expand web development skills. Cape Town Crime Info Hub visualizes SAPS crime data with interactive charts and maps.">
-    <meta name="generator" content="Developed by Sinothabo Zwane">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <meta name="description" content="Stay alert with real-time crime risk info for Cape Town. Find out which areas are most dangerous right now, get safety tips, and see official alerts.">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #0ea5e9;
-            --primary-dark: #0284c7;
-            --secondary: #f97316;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-            --dark: #1e293b;
-            --light: #f8fafc;
-            --gray: #64748b;
-            --glass: rgba(255, 255, 255, 0.1);
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .hero {
-            position: relative;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            background: linear-gradient(135deg, rgba(6, 17, 97, 0.9), rgba(12, 20, 52, 0.8)),
-                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23000000" stop-opacity="0.1"/></radialGradient></defs><rect width="100%" height="100%" fill="url(%23a)"/></svg>');
-            background-size: cover;
-            background-attachment: fixed;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%);
-            animation: shimmer 3s ease-in-out infinite;
-        }
-
-        @keyframes shimmer {
-            0%, 100% { transform: translateX(-100%); }
-            50% { transform: translateX(100%); }
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            max-width: 800px;
-            padding: 2rem;
-        }
-
-        .hero h1 {
-            font-size: clamp(3rem, 8vw, 6rem);
-            font-weight: 800;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, #fff, #e2e8f0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
-        }
-
-        .hero p {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-        }
-
-        .cta-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 1rem 2rem;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            border: none;
-            border-radius: 50px;
-            color: white;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.4);
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 40px rgba(14, 165, 233, 0.6);
-        }
-
-        .main-content {
-            padding: 4rem 0;
-            position: relative;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .section {
-            margin-bottom: 4rem;
-        }
-
-        .section-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            text-align: center;
-            background: linear-gradient(135deg, #fff, #e2e8f0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .stat-card {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 2rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-            animation: scan 2s linear infinite;
-        }
-
-        @keyframes scan {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        .stat-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .stat-value {
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            font-size: 1.1rem;
-            opacity: 0.8;
-        }
-
-        .chart-container {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
-            height: 500px;
-        }
-
-        .chart-container::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(from 0deg, transparent, rgba(14, 165, 233, 0.1), transparent);
-            animation: rotate 20s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .chart-content {
-            position: relative;
-            z-index: 2;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .chart-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .month-selector {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 25px;
-            padding: 0.5rem;
-        }
-
-        .month-btn {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .month-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-        }
-
-        .month-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .month-btn:disabled:hover {
-            background: none;
-            transform: none;
-        }
-
-        .current-month {
-            font-weight: 600;
-            padding: 0.5rem 1rem;
-            background: var(--primary);
-            border-radius: 15px;
-            min-width: 120px;
-            text-align: center;
-        }
-
-        #crimeChart {
-            flex: 1;
-            max-height: 400px;
-        }
-
-        .live-date {
-            position: fixed;
-            top: 2rem;
-            right: 2rem;
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 1rem 1.5rem;
-            font-weight: 600;
-            z-index: 1000;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .date-label {
-            font-size: 0.8rem;
-            opacity: 0.7;
-            margin-bottom: 0.25rem;
-        }
-
-        .date-value {
-            font-size: 1rem;
-            color: var(--primary);
-        }
-
-        .areas-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .area-card {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .area-card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .area-name {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .risk-level {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .risk-high { background: rgba(239, 68, 68, 0.2); color: #fecaca; }
-        .risk-medium { background: rgba(245, 158, 11, 0.2); color: #fed7aa; }
-        .risk-low { background: rgba(16, 185, 129, 0.2); color: #a7f3d0; }
-
-        .news-section {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 2rem;
-        }
-
-        .news-item {
-            padding: 1rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .news-item:last-child {
-            border-bottom: none;
-        }
-
-        .news-title {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .news-date {
-            font-size: 0.9rem;
-            opacity: 0.7;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 2rem;
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-        }
-
-        .floating-elements {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .floating-element {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: float 20s infinite linear;
-        }
-
-        @keyframes float {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 3rem; }
-            .hero p { font-size: 1.2rem; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .areas-grid { grid-template-columns: 1fr; }
+        body { font-family: 'Inter', sans-serif; background: #1e293b; color: #fff; margin: 0; }
+        header { background: #0ea5e9; color: #fff; padding: 1.5rem 0; text-align: center; }
+        .live-date { font-size: 1.1rem; margin-top: 0.5rem; }
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .alerts { background: #ef4444; color: #fff; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
+        .alerts h2 { margin-top: 0; }
+        .alert-list { list-style: none; padding: 0; margin: 0; }
+        .alert-item { margin-bottom: 1rem; font-size: 1.2rem; }
+        .alert-item:last-child { margin-bottom: 0; }
+        .area-lookup { background: #334155; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
+        .area-lookup label { font-weight: 600; }
+        .area-lookup select { margin-left: 1rem; padding: 0.3rem; border-radius: 5px; border: none; }
+        .area-info { margin-top: 1rem; font-size: 1.1rem; }
+        #crime-map { height: 350px; border-radius: 10px; margin-bottom: 2rem; }
+        .news { background: #0ea5e9; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
+        .news h2 { margin-top: 0; }
+        .news-list { list-style: none; padding: 0; margin: 0; }
+        .news-item { margin-bottom: 1rem; }
+        .news-item:last-child { margin-bottom: 0; }
+        .tips { background: #10b981; color: #fff; border-radius: 10px; padding: 1.5rem; }
+        .tips h2 { margin-top: 0; }
+        .tips-list { margin: 0; padding-left: 1.2rem; }
+        .contact { margin: 2rem 0 1rem 0; text-align: center; }
+        .contact a { color: #0ea5e9; text-decoration: underline; }
+        @media (max-width: 600px) {
+            .container { padding: 0 0.5rem; }
+            #crime-map { height: 220px; }
         }
     </style>
 </head>
 <body>
-    <div class="live-date">
-        <div class="date-label">Cape Town Time</div>
-        <div class="date-value" id="live-date"></div>
+    <header>
+        <h1>Cape Town Crime Alerts</h1>
+        <div class="live-date" id="live-date"></div>
+        <div style="font-size:1.1rem;opacity:0.85;">Stay alert. Stay safe. Know your area.</div>
+    </header>
+    <div class="container">
+        <section class="alerts" id="alerts-section">
+            <h2>⚠️ Critical Alerts</h2>
+            <ul class="alert-list" id="alert-list"></ul>
+        </section>
+        <section class="area-lookup">
+            <label for="area-select">Check your area:</label>
+            <select id="area-select"></select>
+            <div class="area-info" id="area-info"></div>
+        </section>
+        <div id="crime-map"></div>
+        <section class="news" id="news-section" style="display:none;">
+            <h2>Official Alerts & News</h2>
+            <ul class="news-list" id="news-list"></ul>
+        </section>
+        <section class="tips">
+            <h2>Safety Tips</h2>
+            <ul class="tips-list">
+                <li>Be aware of your surroundings at all times.</li>
+                <li>Avoid walking alone at night in high-risk areas.</li>
+                <li>Report suspicious activity to SAPS: <b>10111</b></li>
+                <li>Save emergency contacts on your phone.</li>
+                <li>Share alerts with friends and family.</li>
+            </ul>
+        </section>
+        <div class="contact">
+            <p>To report a crime or emergency, call <b>10111</b> or visit your nearest police station.</p>
+            <p>For more info: <a href="https://www.saps.gov.za/" target="_blank" rel="noopener">SAPS Official Website</a></p>
+        </div>
     </div>
-    
-    <div class="floating-elements" id="floating-elements"></div>
-    
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Cape Town Crime Info Hub</h1>
-            <p>Real-time insights, statistics, and safety information for the Mother City</p>
-            <button class="cta-button" onclick="scrollToContent()">
-                <span>Explore Data</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M7 13l3 3 7-7"/>
-                </svg>
-            </button>
-        </div>
-    </section>
-
-    <main class="main-content" id="main-content">
-        <div class="container">
-            <section class="section">
-                <h2 class="section-title">Current Statistics</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" style="color: var(--danger);">1,247</div>
-                        <div class="stat-label">Reported Incidents (This Quarter (Q4))</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" style="color: var(--warning);">73%</div>
-                        <div class="stat-label">Response Rate</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" style="color: var(--success);">-12%</div>
-                        <div class="stat-label">Change from Previous Year Q4 </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" style="color: var(--primary);">156</div>
-                        <div class="stat-label">Areas Monitored</div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="section">
-                <h2 class="section-title">Crime Distribution</h2>
-                <div class="chart-container">
-                    <div class="chart-content">
-                        <div class="chart-header">
-                            <h3 class="chart-title">Crime Types Overview</h3>
-                            <div class="month-selector">
-                                <button class="month-btn" id="prev-month" onclick="changeMonth(-1)">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M15 18l-6-6 6-6"/>
-                                    </svg>
-                                </button>
-                                <span class="current-month" id="current-month"></span>
-                                <button class="month-btn" id="next-month" onclick="changeMonth(1)">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M9 18l6-6-6-6"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <canvas id="crimeChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <section class="section">
-                <h2 class="section-title">Area Risk Assessment</h2>
-                <div class="areas-grid">
-                    <div class="area-card">
-                        <div class="area-name">City Bowl</div>
-                        <span class="risk-level risk-medium">Medium Risk</span>
-                        <p>Tourist areas with moderate crime rates. Exercise normal precautions, especially at night.</p>
-                    </div>
-                    <div class="area-card">
-                        <div class="area-name">Camps Bay</div>
-                        <span class="risk-level risk-low">Low Risk</span>
-                        <p>Well-patrolled beachfront area with good security presence. Generally safe for visitors.</p>
-                    </div>
-                    <div class="area-card">
-                        <div class="area-name">Khayelitsha</div>
-                        <span class="risk-level risk-high">High Risk</span>
-                        <p>Township area with elevated crime rates. Avoid after dark and travel with local guides.</p>
-                    </div>
-                    <div class="area-card">
-                        <div class="area-name">Hout Bay</div>
-                        <span class="risk-level risk-medium">Medium Risk</span>
-                        <p>Scenic coastal suburb with occasional property crimes. Stay aware of surroundings.</p>
-                    </div>
-                    <div class="area-card">
-                        <div class="area-name">Nyanga</div>
-                        <span class="risk-level risk-high">High Risk</span>
-                        <p>High crime township. Travel not recommended without local knowledge and security.</p>
-                    </div>
-                    <div class="area-card">
-                        <div class="area-name">Sea Point</div>
-                        <span class="risk-level risk-low">Low Risk</span>
-                        <p>Upmarket suburb with good security. Popular with tourists and generally safe.</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="section">
-                <h2 class="section-title">Recent Safety News</h2>
-                <div class="news-section">
-                    <div class="news-item">
-                        <div class="news-title">New CCTV Network Deployed in CBD</div>
-                        <div class="news-date">June 10, 2025</div>
-                        <p>Cape Town's Central Business District receives upgraded surveillance system with AI-powered threat detection.</p>
-                    </div>
-                    <div class="news-item">
-                        <div class="news-title">Community Policing Forum Expansion</div>
-                        <div class="news-date">June 8, 2025</div>
-                        <p>Local communities in 15 neighborhoods join expanded community policing initiatives.</p>
-                    </div>
-                    <div class="news-item">
-                        <div class="news-title">Tourist Safety App Launched</div>
-                        <div class="news-date">June 5, 2025</div>
-                        <p>New mobile application provides real-time safety alerts and emergency contact features for visitors.</p>
-                    </div>
-                    <div class="news-item">
-                        <div class="news-title">Property Crime Decreases in Southern Suburbs</div>
-                        <div class="news-date">June 3, 2025</div>
-                        <p>Statistics show 18% reduction in residential break-ins across Constantia, Claremont, and surrounding areas.</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="section">
-                <h2 class="section-title">Crime Hotspots Map</h2>
-                <div id="crime-map" style="height: 500px; border-radius: 20px; overflow: hidden; margin-bottom: 2rem;"></div>
-            </section>
-        </div>
-    </main>
-
-    <footer class="footer">
-        <p>&copy; 2025 Cape Town Crime Hub. Data sourced from SAPS 2024-2025 Q4 Data.</p>
-    </footer>
-
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // --- Live Date/Time ---
         function startDateUpdater() {
@@ -590,20 +88,7 @@
         }
         startDateUpdater();
 
-        // --- Floating Elements ---
-        function createFloatingElements() {
-            const container = document.getElementById('floating-elements');
-            for (let i = 0; i < 20; i++) {
-                const element = document.createElement('div');
-                element.className = 'floating-element';
-                element.style.left = Math.random() * 100 + '%';
-                element.style.animationDelay = Math.random() * 20 + 's';
-                element.style.animationDuration = (Math.random() * 10 + 15) + 's';
-                container.appendChild(element);
-            }
-        }
-
-        // --- CSV Data Loader ---
+        // --- CSV Loader ---
         function parseCSV(csv) {
             const lines = csv.trim().split('\n');
             const headers = lines[0].replace(/"/g, '').split(',');
@@ -614,246 +99,130 @@
                 return obj;
             });
         }
-
-        async function loadAggregateData() {
+        async function loadData() {
             const resp = await fetch('unified_crime_dataset_2025-06-16 (1).csv');
             const csv = await resp.text();
             return parseCSV(csv);
         }
 
-        // --- Globals ---
-        let aggregateData = [];
-        const quarters = [
-            { label: "2025 Q4", key: "crimes_2025_q4" },
-            { label: "2024 Q4", key: "crimes_2024_q4" },
-            { label: "2023 Q4", key: "crimes_2023_q4" },
-            { label: "2022 Q4", key: "crimes_2022_q4" },
-            { label: "2021 Q4", key: "crimes_2021_q4" }
-        ];
-        let currentQuarterIndex = 0;
-        let currentChart = null;
-        let crimeMap = null;
-        let crimeMapMarkers = [];
-
-        // --- Stats Cards ---
-        function renderStatsCards() {
-            const container = document.querySelector('.stats-grid');
-            container.innerHTML = '';
-            const q = quarters[currentQuarterIndex].key;
-            const prevQ = quarters[currentQuarterIndex + 1] ? quarters[currentQuarterIndex + 1].key : null;
-
-            const totalCrimes = aggregateData.reduce((sum, row) => sum + Number(row[q] || 0), 0);
-            const prevCrimes = prevQ ? aggregateData.reduce((sum, row) => sum + Number(row[prevQ] || 0), 0) : 0;
-            const changePct = prevCrimes ? ((totalCrimes - prevCrimes) / prevCrimes * 100).toFixed(1) : 0;
-            const numStations = aggregateData.length;
-
-            // Best and worst performing stations
-            const sorted = [...aggregateData].sort((a, b) => Number(b[q]) - Number(a[q]));
-            const best = sorted[0];
-            const worst = sorted[sorted.length - 1];
-
-            const cards = [
-                {
-                    value: totalCrimes.toLocaleString(),
-                    label: `Total Crimes (${quarters[currentQuarterIndex].label})`
-                },
-                {
-                    value: `${changePct > 0 ? '+' : ''}${changePct}%`,
-                    label: `Change vs Previous Year`
-                },
-                {
-                    value: numStations,
-                    label: `Stations Monitored`
-                },
-                {
-                    value: best.station_name,
-                    label: `Most Crimes (${best[q]})`
-                },
-                {
-                    value: worst.station_name,
-                    label: `Least Crimes (${worst[q]})`
-                }
-            ];
-
-            cards.forEach(card => {
-                container.innerHTML += `
-                    <div class="stat-card">
-                        <div class="stat-value">${card.value}</div>
-                        <div class="stat-label">${card.label}</div>
-                    </div>
-                `;
+        // --- Critical Alerts ---
+        function renderAlerts(data) {
+            // Show top 5 areas with highest crimes in latest quarter, and/or High Priority
+            const q = 'crimes_2025_q4';
+            const sorted = [...data].sort((a, b) => Number(b[q]) - Number(a[q]));
+            const highRisk = sorted.filter(r => r.needs_attention === 'High Priority');
+            const top = sorted.slice(0, 5);
+            const alerts = highRisk.length ? highRisk : top;
+            const alertList = document.getElementById('alert-list');
+            alertList.innerHTML = '';
+            alerts.forEach(row => {
+                alertList.innerHTML += `<li class="alert-item">
+                    <b>${row.station_name}</b> — <span style="color:#fff;background:#ef4444;padding:0.2em 0.5em;border-radius:5px;">${row.needs_attention || 'High Risk'}</span>
+                    <br>Trend: <b>${row.trend_classification}</b> | Crimes: <b>${row[q]}</b>
+                </li>`;
             });
         }
 
-        // --- Chart ---
-        function renderCrimeChart() {
-            const container = document.querySelector('.chart-container');
-            container.innerHTML = `
-                <div class="chart-content">
-                    <div class="chart-header">
-                        <span class="chart-title">Top 10 Stations by Crimes (${quarters[currentQuarterIndex].label})</span>
-                        <div class="month-selector">
-                            <button class="month-btn" id="prev-month" title="Previous" ${currentQuarterIndex >= quarters.length - 1 ? 'disabled' : ''}>&lt;</button>
-                            <span class="current-month" id="current-month">${quarters[currentQuarterIndex].label}</span>
-                            <button class="month-btn" id="next-month" title="Next" ${currentQuarterIndex <= 0 ? 'disabled' : ''}>&gt;</button>
-                        </div>
-                    </div>
-                    <canvas id="crimeChart"></canvas>
-                </div>
-            `;
-
-            // Chart data
-            const q = quarters[currentQuarterIndex].key;
-            const top10 = [...aggregateData]
-                .sort((a, b) => Number(b[q]) - Number(a[q]))
-                .slice(0, 10);
-
-            const labels = top10.map(r => r.station_name);
-            const data = top10.map(r => Number(r[q]));
-
-            // Chart.js
-            const ctx = document.getElementById('crimeChart').getContext('2d');
-            if (currentChart) currentChart.destroy();
-            currentChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Crimes',
-                        data,
-                        backgroundColor: 'rgba(14, 165, 233, 0.7)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
+        // --- Area Lookup ---
+        function renderAreaLookup(data) {
+            const select = document.getElementById('area-select');
+            select.innerHTML = '';
+            data.forEach(row => {
+                select.innerHTML += `<option value="${row.station_name}">${row.station_name}</option>`;
             });
-
-            // Month navigation
-            document.getElementById('prev-month').onclick = () => changeMonth(1);
-            document.getElementById('next-month').onclick = () => changeMonth(-1);
+            select.onchange = () => showAreaInfo(data, select.value);
+            showAreaInfo(data, select.value);
         }
-
-        // --- Area Risk Assessment ---
-        function renderAreaRiskAssessment() {
-            const container = document.querySelector('.areas-grid');
-            container.innerHTML = '';
-            const q = quarters[currentQuarterIndex].key;
-
-            // Sort by risk: High Priority, Monitor, Good
-            const sorted = [...aggregateData].sort((a, b) => {
-                const riskOrder = { 'High Priority': 0, 'Monitor': 1, 'Good': 2 };
-                return (riskOrder[a.needs_attention] ?? 3) - (riskOrder[b.needs_attention] ?? 3);
-            });
-
-            sorted.forEach(row => {
-                let riskClass = 'risk-low';
-                if (row.needs_attention === 'High Priority') riskClass = 'risk-high';
-                else if (row.needs_attention === 'Monitor') riskClass = 'risk-medium';
-
-                container.innerHTML += `
-                    <div class="area-card">
-                        <div class="area-name">${row.station_name}</div>
-                        <div class="risk-level ${riskClass}">${row.needs_attention || 'Unknown'}</div>
-                        <div>Trend: <b>${row.trend_classification || 'N/A'}</b></div>
-                        <div>Performance: <b>${row.performance_score || 'N/A'}</b></div>
-                        <div>Crimes: <b>${row[q]}</b></div>
-                        <div>Improvement: <b>${row.improvement_status || 'N/A'}</b></div>
-                    </div>
-                `;
-            });
-        }
-
-        // --- News Section (Placeholder) ---
-        function renderNewsSection() {
-            const container = document.querySelector('.news-section');
-            container.innerHTML = `
-                <div class="news-item">
-                    <div class="news-title">SAPS releases latest quarterly crime stats</div>
-                    <div class="news-date">June 2025</div>
-                    <div class="news-description">Western Cape sees significant decreases in several high-risk areas, with Mitchells Plain and Durbanville showing excellent improvement.</div>
+        function showAreaInfo(data, area) {
+            const info = document.getElementById('area-info');
+            const row = data.find(r => r.station_name === area);
+            if (!row) { info.textContent = ''; return; }
+            const q = 'crimes_2025_q4';
+            let riskClass = 'risk-low';
+            if (row.needs_attention === 'High Priority') riskClass = 'risk-high';
+            else if (row.needs_attention === 'Monitor') riskClass = 'risk-medium';
+            info.innerHTML = `
+                <div style="margin-bottom:0.5em;">
+                    <span style="font-weight:700;">${row.station_name}</span>
+                    <span class="${riskClass}" style="margin-left:1em;padding:0.2em 0.6em;border-radius:5px;background:#ef4444;color:#fff;">${row.needs_attention || 'Unknown'}</span>
                 </div>
-                <div class="news-item">
-                    <div class="news-title">Community policing forums praised for impact</div>
-                    <div class="news-date">May 2025</div>
-                    <div class="news-description">Collaborative efforts between SAPS and local communities credited for downward trends in crime hotspots.</div>
-                </div>
+                <div>Trend: <b>${row.trend_classification}</b></div>
+                <div>Crimes (2025 Q4): <b>${row[q]}</b></div>
+                <div>Performance: <b>${row.performance_score}</b></div>
+                <div>Improvement: <b>${row.improvement_status}</b></div>
             `;
         }
 
         // --- Map ---
-        async function initCrimeMap() {
+        let crimeMap = null, crimeMapMarkers = [];
+        function renderMap(data) {
             if (!crimeMap) {
                 crimeMap = L.map('crime-map').setView([-33.92, 18.42], 10);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(crimeMap);
             }
-            // Remove old markers
-            crimeMapMarkers.forEach(marker => crimeMap.removeLayer(marker));
+            crimeMapMarkers.forEach(m => crimeMap.removeLayer(m));
             crimeMapMarkers = [];
-
-            const q = quarters[currentQuarterIndex].key;
-            aggregateData.forEach(row => {
+            const q = 'crimes_2025_q4';
+            data.forEach(row => {
                 if (row.has_coordinates === 'Yes' && row.latitude && row.longitude) {
                     let color = '#10b981';
                     if (row.needs_attention === 'High Priority') color = '#ef4444';
                     else if (row.needs_attention === 'Monitor') color = '#f59e0b';
-
                     const marker = L.circleMarker([Number(row.latitude), Number(row.longitude)], {
-                        radius: 10,
-                        color,
-                        fillColor: color,
-                        fillOpacity: 0.7
+                        radius: 9, color, fillColor: color, fillOpacity: 0.7
                     }).addTo(crimeMap);
-
                     marker.bindPopup(`
                         <b>${row.station_name}</b><br>
-                        Crimes: <b>${row[q]}</b><br>
+                        Risk: <span style="color:${color}">${row.needs_attention}</span><br>
                         Trend: ${row.trend_classification}<br>
-                        Performance: ${row.performance_score}<br>
-                        Needs Attention: <span style="color:${color}">${row.needs_attention}</span>
+                        Crimes: <b>${row[q]}</b>
                     `);
                     crimeMapMarkers.push(marker);
                 }
             });
         }
 
-        // --- Month Change Handler ---
-        async function changeMonth(direction) {
-            const newIndex = currentQuarterIndex - direction;
-            if (newIndex < 0 || newIndex >= quarters.length) return;
-            currentQuarterIndex = newIndex;
-            renderStatsCards();
-            renderCrimeChart();
-            renderAreaRiskAssessment();
-            await initCrimeMap();
+        // --- News Section (with links only) ---
+        function renderNews(news) {
+            const section = document.getElementById('news-section');
+            const list = document.getElementById('news-list');
+            list.innerHTML = '';
+            const validNews = news.filter(n => n.link);
+            if (!validNews.length) { section.style.display = 'none'; return; }
+            section.style.display = '';
+            validNews.forEach(n => {
+                list.innerHTML += `<li class="news-item">
+                    <a href="${n.link}" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;font-weight:600;">
+                        ${n.title}
+                    </a>
+                    <div style="font-size:0.95em;opacity:0.8;">${n.date}</div>
+                </li>`;
+            });
         }
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', async () => {
-            createFloatingElements();
-            aggregateData = await loadAggregateData();
-            renderStatsCards();
-            renderCrimeChart();
-            renderAreaRiskAssessment();
-            renderNewsSection();
-            await initCrimeMap();
-        });
+            const data = await loadData();
+            renderAlerts(data);
+            renderAreaLookup(data);
+            renderMap(data);
 
-        // Smooth scrolling for CTA
-        function scrollToContent() {
-            document.getElementById('main-content').scrollIntoView({
-                behavior: 'smooth'
-            });
-        }
+            // Example news with links (replace with real data or fetch from API)
+            renderNews([
+                {
+                    title: "SAPS: Latest crime stats for Cape Town released",
+                    date: "June 2025",
+                    link: "https://www.saps.gov.za/newsroom/msspeechdetail.php?nid=50752"
+                },
+                {
+                    title: "Community safety tips from SAPS",
+                    date: "May 2025",
+                    link: "https://www.saps.gov.za/services/crime_prevention.php"
+                }
+            ]);
+        });
     </script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
