@@ -68,10 +68,56 @@
             font-weight: 600;
             color: #fff;
         }
+        .area-stats-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .area-stat-block {
+            flex: 1 1 120px;
+            background: #334155;
+            border-radius: 8px;
+            padding: 1.1em 1em 0.9em 1em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 110px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            position: relative;
+            transition: background 0.2s;
+        }
+        .area-stat-block.critical { background: #b91c1c; color: #fff; }
+        .area-stat-block.high { background: #ef4444; color: #fff; }
+        .area-stat-block.medium { background: #f59e0b; color: #fff; }
+        .area-stat-block.low { background: #10b981; color: #fff; }
+        .area-stat-label {
+            font-size: 0.98em;
+            opacity: 0.85;
+            margin-bottom: 0.2em;
+            text-align: center;
+        }
+        .area-stat-value {
+            font-size: 1.45em;
+            font-weight: 700;
+            margin-bottom: 0.1em;
+            text-align: center;
+        }
+        .area-stat-change {
+            font-size: 0.95em;
+            font-weight: 500;
+            margin-top: 0.1em;
+            color: #0ea5e9;
+        }
         @media (max-width: 600px) {
             .container { padding: 0 0.5rem; }
             #crime-map { height: 220px; }
             .area-stats-card { padding: 1rem; }
+        }
+        @media (max-width: 700px) {
+            .area-stats-strip { flex-direction: column; gap: 0.7rem; }
+            .area-stat-block { min-width: 0; }
         }
     </style>
 </head>
@@ -245,21 +291,43 @@
                 <div>Improvement: <b>${row.improvement_status}</b></div>
             `;
 
-            // --- Nicer Area Stats Card ---
+            // --- Dashboard Strip ---
             statsSection.style.display = '';
+            // Assign color class based on risk
+            let riskClass = '';
+            if (risk.label === "Extreme/Critical") riskClass = 'critical';
+            else if (risk.label === "High") riskClass = 'high';
+            else if (risk.label === "Medium") riskClass = 'medium';
+            else riskClass = 'low';
+
             statsDiv.innerHTML = `
-                <div class="area-stats-card">
-                    <ul class="area-stats-list">
-                        <li><span class="area-stats-icon">📊</span><span class="area-stats-label">5-Year Total</span><span class="area-stats-value">${row.total_crimes_5_years}</span></li>
-                        <li><span class="area-stats-icon">📅</span><span class="area-stats-label">Avg/Year</span><span class="area-stats-value">${row.average_crimes_per_year}</span></li>
-                        <li><span class="area-stats-icon">🔢</span><span class="area-stats-label">Provincial Rank</span><span class="area-stats-value">${row.provincial_ranking}</span></li>
-                        <li><span class="area-stats-icon">🌍</span><span class="area-stats-label">National Rank</span><span class="area-stats-value">${row.national_ranking}</span></li>
-                        <li><span class="area-stats-icon">2021</span><span class="area-stats-label">2021 Q4</span><span class="area-stats-value">${row.crimes_2021_q4}</span></li>
-                        <li><span class="area-stats-icon">2022</span><span class="area-stats-label">2022 Q4</span><span class="area-stats-value">${row.crimes_2022_q4} <span style="color:#0ea5e9;font-weight:400;">(${row.change_2022_vs_2021_pct}% vs 2021)</span></span></li>
-                        <li><span class="area-stats-icon">2023</span><span class="area-stats-label">2023 Q4</span><span class="area-stats-value">${row.crimes_2023_q4} <span style="color:#0ea5e9;font-weight:400;">(${row.change_2023_vs_2022_pct}% vs 2022)</span></span></li>
-                        <li><span class="area-stats-icon">2024</span><span class="area-stats-label">2024 Q4</span><span class="area-stats-value">${row.crimes_2024_q4} <span style="color:#0ea5e9;font-weight:400;">(${row.change_2024_vs_2023_pct}% vs 2023)</span></span></li>
-                        <li><span class="area-stats-icon">2025</span><span class="area-stats-label">2025 Q4</span><span class="area-stats-value">${row.crimes_2025_q4} <span style="color:#0ea5e9;font-weight:400;">(${row.change_2025_vs_2024_pct}% vs 2024)</span></span></li>
-                    </ul>
+                <div class="area-stats-strip">
+                    <div class="area-stat-block ${riskClass}">
+                        <div class="area-stat-label">Risk Level</div>
+                        <div class="area-stat-value">${risk.label}</div>
+                        <div class="area-stat-change">Prov. Rank: ${row.provincial_ranking}</div>
+                    </div>
+                    <div class="area-stat-block">
+                        <div class="area-stat-label">5-Year Total</div>
+                        <div class="area-stat-value">${row.total_crimes_5_years}</div>
+                    </div>
+                    <div class="area-stat-block">
+                        <div class="area-stat-label">Avg/Year</div>
+                        <div class="area-stat-value">${row.average_crimes_per_year}</div>
+                    </div>
+                    <div class="area-stat-block">
+                        <div class="area-stat-label">2025 Q4</div>
+                        <div class="area-stat-value">${row.crimes_2025_q4}</div>
+                        <div class="area-stat-change">${row.change_2025_vs_2024_pct}% vs 2024</div>
+                    </div>
+                    <div class="area-stat-block">
+                        <div class="area-stat-label">Trend</div>
+                        <div class="area-stat-value">${row.trend_classification}</div>
+                    </div>
+                    <div class="area-stat-block">
+                        <div class="area-stat-label">Performance</div>
+                        <div class="area-stat-value">${row.performance_score}</div>
+                    </div>
                 </div>
             `;
 
