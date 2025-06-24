@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cape Town Crime Intelligence Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Advanced crime intelligence dashboard for Cape Town - Real-time analytics, predictive insights, and community safety optimization." />
+  <meta name="author" content="Sinothabo Zwane" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- Background Particles -->
+  <div class="bg-particles" id="particles"></div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Cape Town Crime Intelligence Hub</h1>
+      <p class="subtitle">Advanced analytics, real-time monitoring, and predictive insights for community safety optimization</p>
+      <div class="live-indicator">
+        <div class="live-dot"></div>
+        <span id="live-status">Latest Data</span>
+        <span id="live-date"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <!-- Alerts -->
+    <section class="glass-card alerts-dashboard" id="alerts-section">
+      <div class="alerts-header">
+        <div class="alert-icon">⚠️</div>
+        <h2 class="alerts-title">Critical Risk Areas</h2>
+      </div>
+      <div class="alert-grid" id="alert-grid">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <span>Loading critical alerts...</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <div class="dashboard-grid">
+      <div class="main-panel">
+        <!-- Map -->
+        <div class="glass-card">
+          <div class="map-container">
+            <div class="map-overlay">
+                <div class="map-legend"></div>
+            </div>
+            <div id="crime-map" style="height: 100%; width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Area Stats -->
+        <div class="glass-card" id="area-stats-section" style="display: none;">
+          <div style="padding: 2rem;">
+            <h3 style="color: var(--accent); font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem;">Area Intelligence Dashboard</h3>
+            <div id="area-info"></div>
+            <div class="stats-grid" id="area-stats"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side Panel -->
+      <div class="side-panel">
+        <!-- Area Selector -->
+        <div class="glass-card area-selector">
+          <div class="selector-label">📍 Select Area for Analysis</div>
+          <div class="custom-select">
+            <select id="area-select"><option>Loading areas...</option></select>
+          </div>
+        </div>
+
+        <!-- News Panel -->
+        <div class="glass-card news-panel" id="news-section">
+          <div class="news-header">
+            <div class="news-icon">📰</div>
+            <h3 class="news-title">Official Updates</h3>
+          </div>
+          <div id="news-list">
+            <div class="loading">
+              <div class="loading-spinner"></div>
+              <span>Loading updates...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Safety Tips -->
+    <section class="glass-card safety-tips">
+      <div class="tips-header">
+        <div class="tips-icon">🛡️</div>
+        <h2 class="tips-title">Smart Safety Protocol</h2>
+      </div>
+      <div class="tips-grid">
+        <div class="tip-item">
+          <h4>🔍 Situational Awareness</h4>
+          <p>Maintain 360° awareness of your environment. Trust your instincts and avoid distractions.</p>
+        </div>
+        <div class="tip-item">
+          <h4>🌙 Night Safety Protocol</h4>
+          <p>Avoid high-risk areas after dark. Use well-lit routes and travel in groups when possible.</p>
+        </div>
+        <div class="tip-item">
+          <h4>📱 Emergency Response</h4>
+          <p>Keep emergency contacts accessible. Report suspicious activity immediately to SAPS.</p>
+        </div>
+        <div class="tip-item">
+          <h4>🤝 Community Network</h4>
+          <p>Share safety information with neighbors. Build strong community watch networks.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="emergency-info">
+        <h3>Emergency Services</h3>
+        <div class="emergency-number">10111</div>
+        <p>24/7 SAPS Emergency Response</p>
+      </div>
+      <p>
+        <strong>Data:</strong> SAPS 2024–2025 Q4 (Cape Town subset, cleaned &amp; aggregated by Sinothabo Zwane)
+      </p>
+      <p style="margin-top: 2rem; color: #64748b;">2025 Sinothabo Zwane. All rights reserved</p>
+    </div>
+  </footer> 
+
+
+  <!-- Modular JS (ES Modules) -->
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
