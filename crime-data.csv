@@ -1,0 +1,24 @@
+station_name,district,province,provincial_ranking,national_ranking,latitude,longitude,has_coordinates,crimes_2021_q4,crimes_2022_q4,crimes_2023_q4,crimes_2024_q4,crimes_2025_q4,total_crimes_5_years,average_crimes_per_year,change_2022_vs_2021_pct,change_2023_vs_2022_pct,change_2024_vs_2023_pct,change_2025_vs_2024_pct,crime_change_2025_vs_2024,crime_change_2025_vs_2024_pct,trend_classification,performance_score,needs_attention,improvement_status
+Mitchells-Plain,City of Cape Town District,Western Cape,3,7,-34.0503,18.6187,Yes,1737,1973,2218,2116,1771,9815,1963,13.6,12.4,-4.6,-16.3,-345,-16.3,SignificantDecrease,16.3,Good,ExcellentImprovement
+Durbanville,City of Cape Town District,Western Cape,29,124,-33.8325,18.647499,Yes,727,792,916,953,808,4196,839,8.9,15.7,4,-15.2,-145,-15.2,SignificantDecrease,15.2,Good,ExcellentImprovement
+Grassy-Park,City of Cape Town District,Western Cape,22,94,-34.0496,18.5057,Yes,1052,1054,1093,1087,936,5222,1044,0.2,3.7,-0.5,-13.9,-151,-13.9,SignificantDecrease,13.9,Good,ExcellentImprovement
+Athlone,City of Cape Town District,Western Cape,26,104,-33.96111,18.50306,Yes,820,1004,975,1003,871,4673,935,22.4,-2.9,2.9,-13.2,-132,-13.2,SignificantDecrease,13.2,Good,ExcellentImprovement
+Kraaifontein,City of Cape Town District,Western Cape,5,12,-33.8478,18.7176,Yes,1464,1450,1578,1784,1578,7854,1571,-1,8.8,13.1,-11.5,-206,-11.5,SignificantDecrease,11.5,Good,ExcellentImprovement
+Bishop-Lavis,City of Cape Town District,Western Cape,15,72,-33.9478,18.5755,Yes,912,948,959,1129,1033,4981,996,3.9,1.2,17.7,-8.5,-96,-8.5,ModerateDecrease,8.5,Good,GoodImprovement
+Elsies-River,City of Cape Town District,Western Cape,25,102,-33.9181,18.5767,Yes,796,944,1020,954,883,4597,919,18.6,8.1,-6.5,-7.4,-71,-7.4,ModerateDecrease,7.4,Good,GoodImprovement
+Lentegeur,City of Cape Town District,Western Cape,27,111,-34.039,18.611,Yes,839,931,985,909,842,4506,901,11,5.8,-7.7,-7.4,-67,-7.4,ModerateDecrease,7.4,Good,GoodImprovement
+Cape-Town-Central,City of Cape Town District,Western Cape,1,1,-33.9253,18.4247,Yes,1720,2653,3079,3322,3102,13876,2775,54.2,16.1,7.9,-6.6,-220,-6.6,ModerateDecrease,6.6,Good,ExcellentImprovement
+Parow,City of Cape Town District,Western Cape,24,98,-33.906792,18.580812,Yes,1002,1083,1003,967,916,4971,994,8.1,-7.4,-3.6,-5.3,-51,-5.3,ModerateDecrease,5.3,Good,GoodImprovement
+Nyanga,City of Cape Town District,Western Cape,8,32,-33.9936,18.5838,Yes,1247,1301,1453,1354,1288,6643,1329,4.3,11.7,-6.8,-4.9,-66,-4.9,Stable,4.9,Good,GoodImprovement
+Table-View,City of Cape Town District,Western Cape,12,50,-33.9111,18.5167,Yes,863,1122,1288,1249,1191,5713,1143,30,14.8,-3,-4.6,-58,-4.6,Stable,4.6,Good,GoodImprovement
+Sea-Point,City of Cape Town District,Western Cape,30,125,-33.9153,18.3925,Yes,426,638,763,843,805,3475,695,49.8,19.6,10.5,-4.5,-38,-4.5,Stable,4.5,Good,SomeImprovement
+Kleinvlei,City of Cape Town District,Western Cape,13,53,-34.0047,18.713,Yes,1113,1171,1064,1220,1184,5752,1150,5.2,-9.1,14.7,-3,-36,-3,Stable,3,Good,SomeImprovement
+Mfuleni,City of Cape Town District,Western Cape,2,4,-34.0016,18.6764,Yes,1344,1433,1817,1953,1938,8485,1697,6.6,26.8,7.5,-0.8,-15,-0.8,Stable,0.8,Good,SomeImprovement
+Kuilsrivier,City of Cape Town District,Western Cape,16,75,-33.93231,18.6825,Yes,866,936,996,1029,1021,4848,970,8.1,6.4,3.3,-0.8,-8,-0.8,Stable,0.8,Good,SomeImprovement
+Gugulethu,City of Cape Town District,Western Cape,21,92,-33.981,18.5645,Yes,894,886,931,942,938,4591,918,-0.9,5.1,1.2,-0.4,-4,-0.4,Stable,0.4,Good,SomeImprovement
+Bellville,City of Cape Town District,Western Cape,11,47,-33.8943,18.6294,Yes,1218,1147,1285,1213,1212,6075,1215,-5.8,12,-5.6,-0.1,-1,-0.1,Stable,0.1,Good,SomeImprovement
+Milnerton,City of Cape Town District,Western Cape,9,39,-33.8667,18.5,Yes,1005,1200,1411,1261,1261,6138,1228,19.4,17.6,-10.6,0,0,0,Stable,0,Good,NoChange
+Atlantis,City of Cape Town District,Western Cape,19,89,-33.5667,18.4833,Yes,786,802,859,906,945,4298,860,2,7.1,5.5,4.3,39,4.3,Stable,-4.3,Monitor,Deterioration
+Khayelitsha,City of Cape Town District,Western Cape,10,46,-34.049,18.6723,Yes,1247,1086,1019,1158,1218,5728,1146,-12.9,-6.2,13.6,5.2,60,5.2,ModerateIncrease,-5.2,HighPriority,Deterioration
+Delft,City of Cape Town District,Western Cape,4,8,-33.973,18.6455,Yes,1489,1564,1597,1640,1767,8057,1611,5,2.1,2.7,7.7,127,7.7,Moderate Increase,-7.7,HighPriority,Deterioration
+Somerset-West,City of Cape Town District,Western Cape,17,80,-34.0833,18.8333,Yes,783,827,887,854,999,4350,870,5.6,7.3,-3.7,17,145,17,SignificantIncrease,-17,HighPriority,Deterioration
