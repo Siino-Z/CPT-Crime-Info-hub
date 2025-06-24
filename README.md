@@ -6,13 +6,13 @@
 
 ## Features
 
-- 🗺️ **Interactive Map:** Visualize crime hotspots and trends across Cape Town precincts.
-- 📊 **Area Intelligence Dashboard:** Select any precinct to view detailed risk levels, trends, and performance metrics.
-- ⚠️ **Critical Alerts:** Instantly see areas with the highest risk and recent negative trends.
-- 📰 **Official Updates:** Stay informed with the latest SAPS news and community policing initiatives.
-- 🛡️ **Safety Tips:** Practical advice for personal and community safety.
-- 🚨 **Emergency Info:** Quick access to emergency contact details.
-- 🔄 **Latest Data:** Dashboard reflects the most recent available SAPS data (2024–2025 Q4, Cape Town subset).
+- **Interactive Map:** Visualize crime hotspots and trends across Cape Town precincts.
+- **Area Intelligence Dashboard:** Select any precinct to view detailed risk levels, trends, and performance metrics.
+- **Critical Alerts:** Instantly see areas with the highest risk and recent negative trends.
+- **Official Updates:** Stay informed with the latest SAPS news and community policing initiatives.
+- **Safety Tips:** Practical advice for personal and community safety.
+- **Emergency Info:** Quick access to emergency contact details.
+- **Latest Data:** Dashboard reflects the most recent available SAPS data (2024–2025 Q4, Cape Town subset).
 
 ## Technologies Used
 
@@ -49,7 +49,7 @@
 ## Project Structure
 
 ```
-crime-intelligence-dashboard/
+root/
 ├── css/
 │   └── style.css
 ├── js/
