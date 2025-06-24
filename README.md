@@ -50,6 +50,8 @@
 
 ```
 root/
+├── .github/
+│   ├── workflows/
 ├── css/
 │   └── style.css
 ├── js/
@@ -64,6 +66,7 @@ root/
 │   └── crime-data.csv
 ├── index.html
 ├── package.json
+├── vite.config.js
 └── README.md
 ```
 
